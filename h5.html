@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<!-- ★★★ 手机布局不扭曲的第一关键：viewport 必须这么写 ★★★
+     width=device-width   → 按手机真实宽度排布（不写会被当成 980px 宽的电脑页面，字小得看不见）
+     viewport-fit=cover   → 允许内容延伸到 iPhone 刘海/圆角区域，配合下面的 safe-area 用
+     user-scalable=no     → 禁止双指缩放（防止误触把布局放大错位）
+     interactive-widget=resizes-content → 安卓键盘弹出时压缩页面高度，而不是盖住输入框 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#0f0d0a">
+<title>陈大师 · 命理测算</title>
+<style>
+/* ================= 主题色（改这里就能换配色）================= */
+:root{
+  --ink:#0f0d0a;          /* 底色：墨 */
+  --ink2:#17140f;         /* 底色渐变尾 */
+  --card:#221e16;         /* 卡片 */
+  --line:rgba(200,164,92,.26);   /* 金线 */
+  --gold:#c8a45c;         /* 主金 */
+  --gold-l:#e2c47f;       /* 亮金 */
+  --txt:#ece4d4;          /* 主文字（浅）*/
+  --txt-dim:#9b917c;      /* 次要文字 */
+  --user-txt:#1a1508;     /* 用户气泡上的深色字 */
+}
+
+/* ================= 基础重置 ================= */
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; padding:0; background:var(--ink); }
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  color:var(--txt);
+  /* ★ 手机 Safari 横屏/旋转时自动放大字体，关掉它 */
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  overscroll-behavior:none;      /* 禁止橡皮筋过度滚动 */
+}
+
+/* ================= 整体骨架 =================
+   ★ 用 position:fixed 把整个 App 钉在屏幕上。
+   为什么不用 height:100vh？手机浏览器的地址栏会伸缩，100vh 会忽大忽小 → 布局跳动。
+   下面的 --vvh 由 JS 根据"真实可视区域"实时算出来，兼容安卓和 iPhone 键盘。 */
+#app{
+  position:fixed; left:0; right:0; top:0;
+  height:100vh; height:100dvh;          /* 先给个保底值，JS 跑起来会覆盖 */
+  display:flex; flex-direction:column;
+  background:radial-gradient(120% 70% at 50% 0%, #1d1810 0%, var(--ink) 62%);
+}
+
+/* ================= 顶部栏 ================= */
+#topbar{
+  flex:none;
+  display:flex; align-items:center; gap:10px;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;   /* ★ 避开刘海 */
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(200,164,92,.10), rgba(200,164,92,0));
+  backdrop-filter:blur(8px);
+}
+.avatar{
+  flex:none; width:38px; height:38px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; color:var(--gold-l);
+  border:1px solid var(--line);
+  background:radial-gradient(circle at 35% 30%, #2c2619, #16130d);
+}
+.who{ flex:1; min-width:0; }
+.who h1{
+  margin:0; font-size:16px; font-weight:600; letter-spacing:.06em;
+  font-family:"Songti SC","STSong",serif; color:var(--gold-l);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.who p{ margin:2px 0 0; font-size:11px; color:var(--txt-dim); display:flex; align-items:center; gap:5px; }
+.dot{ width:6px; height:6px; border-radius:50%; background:#5fbf7f; box-shadow:0 0 6px #5fbf7f; }
+.icon-btn{
+  flex:none; width:34px; height:34px; border-radius:10px;
+  border:1px solid var(--line); background:transparent; color:var(--txt-dim);
+  font-size:15px; line-height:1; cursor:pointer;
+}
+.icon-btn:active{ background:rgba(200,164,92,.14); color:var(--gold-l); }
+
+/* ================= 消息区 ================= */
+#messages{
+  flex:1 1 auto; min-height:0;              /* ★ 关键：不加 min-height:0，滚动条会失效 */
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  /* ★★ overflow-anchor:none —— 关掉浏览器"自动保持滚动位置"的小动作。
+     它会和我们下面手动滚到底的代码抢方向盘，两个一起动，屏幕看着就会抖/闪。 */
+  overflow-anchor:none;
+  padding:14px 12px 6px;
+  display:flex; flex-direction:column; gap:12px;
+}
+.row{ display:flex; gap:8px; align-items:flex-start; }
+.row.me{ flex-direction:row-reverse; }
+.mini{
+  flex:none; width:28px; height:28px; border-radius:50%; margin-top:2px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; border:1px solid var(--line); color:var(--gold);
+  background:rgba(200,164,92,.08);
+}
+.row.me .mini{ color:var(--user-txt); background:linear-gradient(180deg,var(--gold-l),var(--gold)); border-color:transparent; }
+.bubble{
+  max-width:82%; padding:10px 13px; border-radius:14px;
+  font-size:15px; line-height:1.75;                 /* ★ 行高给足，手机上才不挤 */
+  word-break:break-word; overflow-wrap:anywhere;    /* ★ 超长英文/网址不撑破气泡 */
+  user-select:text; -webkit-user-select:text;
+  animation:pop .22s ease both;
+}
+@keyframes pop{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+.row.ai .bubble{
+  background:var(--card); border:1px solid var(--line);
+  border-top-left-radius:4px; color:var(--txt);
+}
+.row.me .bubble{
+  max-width:78%;
+  background:linear-gradient(180deg,var(--gold-l),var(--gold));
+  color:var(--user-txt); font-weight:500;
+  border-top-right-radius:4px;
+}
+.bubble strong{ color:var(--gold-l); font-weight:600; }
+.row.me .bubble strong{ color:#5a4212; }
+.bubble p{ margin:0 0 .5em; }
+.bubble p:last-child{ margin-bottom:0; }
+.bubble ul{ margin:.2em 0 .6em; padding-left:1.15em; }
+.bubble li{ margin:.18em 0; }
+.bubble .sys{ color:var(--txt-dim); font-size:14px; }
+
+/* ★ 答案分段淡入用的容器（配合下面 JS 里 addTyping 的 done） */
+.seg{ animation:segIn .26s ease both; }
+@keyframes segIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:none; } }
+.bubble .seg:last-child > p:last-child{ margin-bottom:0; }
+
+/* 打字中动画 */
+.typing{ display:inline-flex; gap:4px; align-items:center; padding:2px 0; }
+.typing i{ width:6px; height:6px; border-radius:50%; background:var(--gold); opacity:.35; animation:blink 1.3s infinite; }
+.typing i:nth-child(2){ animation-delay:.2s; }
+.typing i:nth-child(3){ animation-delay:.4s; }
+@keyframes blink{ 0%,60%,100%{opacity:.25; transform:translateY(0);} 30%{opacity:1; transform:translateY(-3px);} }
+/* tabular-nums：秒数的数字用等宽字形，1 秒 → 2 秒时气泡宽度就不会一抽一抽地变 */
+.wait-note{ margin-top:6px; font-size:12px; color:var(--txt-dim); font-variant-numeric:tabular-nums; }
+
+/* 快捷提问 */
+.chips{ display:flex; flex-wrap:wrap; gap:8px; padding:2px 0 4px; }
+.chip{
+  padding:7px 12px; border-radius:999px; font-size:13.5px;
+  border:1px solid var(--line); color:var(--gold-l);
+  background:rgba(200,164,92,.07); cursor:pointer;
+}
+.chip:active{ background:rgba(200,164,92,.22); }
+
+/* 重试按钮 */
+.retry{
+  margin-top:8px; padding:6px 12px; border-radius:9px; font-size:13px;
+  border:1px solid var(--line); background:transparent; color:var(--gold-l); cursor:pointer;
+}
+
+/* ================= 底部输入区 ================= */
+#composer{
+  flex:none;
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom));   /* ★ 避开 iPhone 底部横条 */
+  border-top:1px solid var(--line);
+  background:linear-gradient(0deg, rgba(200,164,92,.07), rgba(200,164,92,0));
+}
+.box{ display:flex; align-items:flex-end; gap:8px; }
+#ta{
+  flex:1; min-width:0;
+  /* ★ 字号必须 >=16px！否则 iPhone 一点输入框就自动放大整个页面（"布局扭曲"的元凶之一）*/
+  font-size:16px; line-height:1.5;
+  font-family:inherit; color:var(--txt);
+  background:var(--card); border:1px solid var(--line); border-radius:12px;
+  padding:10px 12px; resize:none; outline:none;
+  max-height:112px; overflow-y:auto;
+  user-select:text; -webkit-user-select:text;
+}
+#ta::placeholder{ color:#6d6555; }
+#ta:focus{ border-color:rgba(200,164,92,.6); }
+#send{
+  flex:none; height:42px; padding:0 16px; border-radius:12px; border:none;
+  font-size:15px; font-weight:600; color:var(--user-txt);
+  background:linear-gradient(180deg,var(--gold-l),var(--gold));
+  cursor:pointer; transition:opacity .15s;
+}
+#send:disabled{ opacity:.4; cursor:default; }
+.hint{ margin:6px 0 0; text-align:center; font-size:11px; color:#6d6555; }
+
+/* 横屏/大屏时把内容收到中间，别拉得太宽 */
+@media (min-width:600px){
+  #app{ max-width:520px; margin:0 auto; left:50%; transform:translateX(-50%); right:auto; width:100%; border-left:1px solid var(--line); border-right:1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 顶部栏 -->
+  <header id="topbar">
+    <div class="avatar">☯</div>
+    <div class="who">
+      <h1>陈玉楼</h1>
+      <p><span class="dot"></span>在线，可问命理、八字、运势</p>
+    </div>
+    <button class="icon-btn" id="btnClear" title="清空对话">↺</button>
+  </header>
+
+  <!-- 消息区 -->
+  <main id="messages"></main>
+
+  <!-- 底部输入 -->
+  <footer id="composer">
+    <div class="box">
+      <textarea id="ta" rows="1" placeholder="报上姓名与出生年月日…"></textarea>
+      <button id="send">发送</button>
+    </div>
+    <p class="hint">内容由 AI 生成，仅供娱乐参考</p>
+  </footer>
+
+</div>
+
+<script>
+/* ============================================================
+   1) 会话 ID：每个手机分配一个，各自记各自的聊天记录
+   为什么需要？后端记忆是按 session_id 存的，不隔离的话
+   两台手机会串到同一份记忆里，互相看到对方的生辰。
+   ============================================================ */
+var SID_KEY = 'chen_session_id';
+function getSessionId(){
+  var sid = localStorage.getItem(SID_KEY);
+  if(!sid){
+    // 随机生成一个，够用就行（时间戳 + 随机数）
+    sid = 'h5-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem(SID_KEY, sid);
+  }
+  return sid;
+}
+
+/* 接口地址：页面和后端在同一个服务上，用相对路径最省事；
+   如果是直接双击本地文件打开的（file://），就退回本机 8000。 */
+var API = (location.protocol === 'file:') ? 'http://127.0.0.1:8000' : '';
+
+var $messages = document.getElementById('messages');
+var $ta = document.getElementById('ta');
+var $send = document.getElementById('send');
+var busy = false;
+
+/* ============================================================
+   2) 手机键盘适配：让"可视区域高度"实时等于容器高度
+   iPhone 键盘弹起时不会改变页面高度，输入框会被盖住 —— 这里解决它。
+   ============================================================ */
+(function fitViewport(){
+  var vv = window.visualViewport;
+  if(!vv){ return; }                       // 老浏览器没有这个 API，就用 CSS 里的 100dvh 保底
+  var app = document.getElementById('app');
+  var lastH = -1, lastTop = -1, queued = false, settleTimer = null;
+
+  function apply(){
+    queued = false;
+    var h = Math.round(vv.height);
+    var t = Math.round(vv.offsetTop);
+    // ★★ 关键修复：数值没变就一个字都别写。
+    //    手机键盘/地址栏收放时，resize 会连着发十几次；每次都改 #app 的 height，
+    //    整页就要重新排版十几次 —— 用户看到的就是"闪一下"。同一帧内值相同的直接跳过。
+    if(h === lastH && t === lastTop){ return; }
+    lastH = h; lastTop = t;
+    app.style.height = h + 'px';
+    app.style.top = t + 'px';
+    // ★ 可视区变了（键盘收起/弹起）之后，等布局稳下来再滚一次到底。
+    //   原来的写法是在每一个 resize 事件里都抢着滚，滚动条一帧里来回跳 → 抖。
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(function(){ scrollToBottom(true); }, 120);
+  }
+
+  function request(){
+    // ★ 用 requestAnimationFrame 把连续的 resize/scroll 合并成"每帧至多算一次"
+    if(queued){ return; }
+    queued = true;
+    requestAnimationFrame(apply);
+  }
+
+  vv.addEventListener('resize', request);
+  vv.addEventListener('scroll', request);
+  apply();
+})();
+
+/* ============================================================
+   3) 消息渲染
+   ============================================================ */
+// 用户现在是不是已经贴在底部？（距底不到 120px 就算在底部）
+function nearBottom(){
+  return $messages.scrollHeight - $messages.scrollTop - $messages.clientHeight < 120;
+}
+
+// 滚到底。★ 加了两层保护：
+//   1) rAF 合并 —— 一次回答里它会被调用十几次，每次都直接写 scrollTop，滚动条一帧里来回跳 → 看着闪；
+//   2) 自动识别"用户自己往上翻看历史"——那时不抢滚动条，除非 force=true（比如刚发完消息）。
+var scrollQueued = false;
+function scrollToBottom(force){
+  if(!force && !nearBottom()){ return; }
+  if(scrollQueued){ return; }
+  scrollQueued = true;
+  requestAnimationFrame(function(){
+    scrollQueued = false;
+    $messages.scrollTop = $messages.scrollHeight;
+  });
+}
+
+// 把用户可能输入的 < > & 转义掉，防止有人注入 HTML（安全必做）
+function escapeHtml(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 极简 Markdown：只处理 **加粗**、换行、- 列表。够用且不会出错。
+function toHtml(text){
+  var safe = escapeHtml(text);
+  var lines = safe.split(/\r?\n/);
+  var out = [];
+  var inList = false;
+  for(var i = 0; i < lines.length; i++){
+    var line = lines[i].trim();
+    if(/^[-*·]\s+/.test(line)){                       // 无序列表
+      if(!inList){ out.push('<ul>'); inList = true; }
+      out.push('<li>' + line.replace(/^[-*·]\s+/,'') + '</li>');
+      continue;
+    }
+    if(inList){ out.push('</ul>'); inList = false; }
+    if(line === ''){ continue; }
+    out.push('<p>' + line + '</p>');
+  }
+  if(inList){ out.push('</ul>'); }
+  // 加粗（放在最后，避免影响列表判断）
+  return out.join('').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+// 把 toHtml 生成的 HTML 切成"一小块一小块"：每个 <p> 一块，整套 <ul> 一块。
+// 用途见下面 done()：让答案分段出现，而不是一次性砸到屏幕上。
+function splitSegments(html){
+  var parts = html.match(/<p>[\s\S]*?<\/p>|<ul>[\s\S]*?<\/ul>/g);
+  if(!parts || !parts.length){ return [html]; }
+  return parts;
+}
+
+// 加一条消息。who: 'me' | 'ai'
+function addMsg(who, text){
+  var row = document.createElement('div');
+  row.className = 'row ' + (who === 'me' ? 'me' : 'ai');
+  var mini = document.createElement('div');
+  mini.className = 'mini';
+  mini.textContent = (who === 'me' ? '我' : '陈');
+  var bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = toHtml(text);
+  row.appendChild(mini);
+  row.appendChild(bubble);
+  $messages.appendChild(row);
+  scrollToBottom();
+  return bubble;
+}
+
+// 转圈中的气泡，返回一个"改成正式内容"的函数
+function addTyping(){
+  var row = document.createElement('div');
+  row.className = 'row ai';
+  row.innerHTML = '<div class="mini">陈</div>'
+    + '<div class="bubble"><span class="typing"><i></i><i></i><i></i></span>'
+    + '<div class="wait-note">老夫掐指一算…</div></div>';
+  $messages.appendChild(row);
+  scrollToBottom();
+
+  var note = row.querySelector('.wait-note');
+  var sec = 0;
+  // 算得慢时把秒数报出来，用户就知道没卡死
+  var timer = setInterval(function(){
+    sec++;
+    note.textContent = '老夫掐指一算…（' + sec + ' 秒）';
+  }, 1000);
+
+  return {
+    done: function(text){
+      clearInterval(timer);
+      // ★★ 核心修复：不再"整块替换内容"。
+      //    原写法把几百上千字一次性塞进页面，浏览器要在一帧里重算整个排版 ——
+      //    视觉上就是"啪"地蹦出来 + 页面猛地一沉。这就是你看到的"跳出结果 + 闪一下"。
+      //    现在改成切成小段、一段一段淡入，看起来像老夫在慢慢写。
+      var b = row.querySelector('.bubble');
+      var segs = splitSegments(toHtml(text));
+      b.innerHTML = '';
+      // 段落多时把间隔压短，整条答案的"写成时间"控制在 1 秒上下，不会让人等得心焦
+      var gap = Math.max(28, Math.min(90, Math.round(1000 / segs.length)));
+      var i = 0;
+      (function step(){
+        if(i >= segs.length){ scrollToBottom(true); return; }   // 收尾：稳稳贴到底
+        var seg = document.createElement('div');
+        seg.className = 'seg';
+        seg.innerHTML = segs[i];
+        b.appendChild(seg);
+        i++;
+        scrollToBottom(true);        // 这时候用户刚从底部发出问题，强制跟着走
+        setTimeout(step, gap);
+      })();
+    },
+    fail: function(text, onRetry){
+      clearInterval(timer);
+      var b = row.querySelector('.bubble');
+      b.innerHTML = '<span class="sys">' + escapeHtml(text) + '</span>';
+      if(onRetry){
+        var btn = document.createElement('button');
+        btn.className = 'retry';
+        btn.textContent = '再试一次';
+        btn.onclick = function(){ row.remove(); onRetry(); };
+        b.appendChild(btn);
+      }
+      scrollToBottom();
+    }
+  };
+}
+
+/* ============================================================
+   4) 快捷提问（首次进入时显示，点一下直接问）
+   ============================================================ */
+var QUICK = ['帮我算八字，我叫…', '2026 年属龙的运势如何？', '帮我看看姻缘', '帮我做个姓名测算'];
+function showQuick(){
+  var wrap = document.createElement('div');
+  wrap.className = 'chips';
+  QUICK.forEach(function(q){
+    var b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = q;
+    b.onclick = function(){ wrap.remove(); ask(q); };
+    wrap.appendChild(b);
+  });
+  $messages.appendChild(wrap);
+  scrollToBottom();
+}
+
+/* ============================================================
+   5) 发送消息（核心）
+   ============================================================ */
+function ask(text){
+  if(busy){ return; }
+  busy = true;
+  $send.disabled = true;
+  addMsg('me', text);
+
+  var tip = addTyping();
+  var sid = getSessionId();
+  var url = API + '/chat?query=' + encodeURIComponent(text) + '&session_id=' + encodeURIComponent(sid);
+
+  // 后端算得慢，给足 3 分钟；超时就当网络问题处理
+  var ctrl = new AbortController();
+  var timeout = setTimeout(function(){ ctrl.abort(); }, 180000);
+
+  fetch(url, { method:'POST', signal: ctrl.signal })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      clearTimeout(timeout);
+      if(data && data.response){ tip.done(data.response); }
+      else if(data && data.error){ tip.fail('卦象没算成，稍后再试。', function(){ ask(text); }); }
+      else { tip.fail('没收到回应，稍后再试。', function(){ ask(text); }); }
+    })
+    .catch(function(){
+      clearTimeout(timeout);
+      // 分两种情况，方便一眼看出到底是"等太久"还是"根本连不上"
+      var why = ctrl.signal.aborted
+        ? '这一卦算得太久（超过 3 分钟），先停下了。稍后再试。'
+        : '连不上老夫的卦摊：后端可能没启动，或者地址不对。';
+      tip.fail(why, function(){ ask(text); });
+    })
+    .then(function(){
+      busy = false;
+      $send.disabled = false;
+      // ★ 手机上不再自动把光标抢回输入框。
+      //   原因：键盘"收起 → 弹出"会让整个页面高度突变一次，用户看到的就是"又闪一下"。
+      //   电脑屏幕大（>=600px）且没触摸，保留这个行为，打字方便。
+      if(window.innerWidth >= 600 && !('ontouchstart' in window)){ $ta.focus(); }
+    });
+}
+
+/* ============================================================
+   6) 输入框行为
+   ============================================================ */
+function submit(){
+  var t = $ta.value.trim();
+  if(!t || busy){ return; }
+  $ta.value = '';
+  autoGrow();
+  ask(t);
+}
+
+// 输入框随内容长高（最多 4 行左右）
+function autoGrow(){
+  $ta.style.height = 'auto';
+  $ta.style.height = Math.min($ta.scrollHeight, 112) + 'px';
+}
+$ta.addEventListener('input', autoGrow);
+$ta.addEventListener('keydown', function(e){
+  // 电脑上回车直接发；手机上回车是换行（不然用户没法打多行）
+  if(e.key === 'Enter' && !e.shiftKey && window.innerWidth >= 600){
+    e.preventDefault();
+    submit();
+  }
+});
+$send.addEventListener('click', submit);
+
+$ta.addEventListener('focus', function(){
+  // 键盘弹起后，等布局稳定再把消息滚到底（这里用 force：用户正在打字，就该看到最新内容）
+  setTimeout(function(){ scrollToBottom(true); }, 300);
+});
+
+/* 清空按钮：清掉屏幕上的消息 + 换一个新会话（旧记忆留在后端，不删） */
+document.getElementById('btnClear').onclick = function(){
+  if(busy){ return; }
+  if(!confirm('清空当前对话？')){ return; }
+  localStorage.removeItem(SID_KEY);
+  $messages.innerHTML = '';
+  greet();
+  // ★ 同上：手机上不抢焦点，免得键盘弹起来闪一下
+  if(window.innerWidth >= 600 && !('ontouchstart' in window)){ $ta.focus(); }
+};
+
+/* ============================================================
+   7) 开场白
+   ============================================================ */
+function greet(){
+  addMsg('ai', '老夫陈玉楼。你要问命、问运、问前程，先把**姓名**和**出生年月日**报上来，'
+    + '阳历阴历都成，说清楚就中。\n\n'
+    + '- 要算八字，记得带上出生时辰\n'
+    + '- 要问流年，说清是哪一年、属什么\n'
+    + '- 一时说不全也不打紧，老夫慢慢问');
+  showQuick();
+}
+greet();
+</script>
+</body>
+</html>

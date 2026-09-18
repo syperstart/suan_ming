@@ -1,0 +1,23 @@
+# 这些文件不会打进镜像（和 .gitignore 一个道理）
+# ★ 数据目录不打进镜像：它们由 docker-compose 挂载，打进去只会让镜像变大且互相覆盖
+data/
+local_qdrant/
+memory.json
+memory_*.json
+
+# 缓存和编辑器文件
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.git/
+.venv/
+venv/
+
+# 本机相关资料，跟运行无关
+.workbuddy/
+启动服务.bat
+_scan.py
+_scan_out.txt
+_check_h5.js
+_check_out.txt

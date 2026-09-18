@@ -1,0 +1,28 @@
+# ============================================================
+#  本项目真正需要的依赖清单
+#
+#  ★ 为什么不用 pip freeze 全量导出？
+#    本机装了 300 多个包（django、easyocr、flask 等等都是别的项目的），
+#    全塞进镜像会让镜像巨大、还容易装出冲突。这里只写本项目真正 import 的。
+#
+#  ★ torch 不在这里：它体积最大，Dockerfile 里单独用「CPU 版源」安装，
+#    否则默认会拉 2GB 多的 CUDA 版本，又慢又用不上。
+# ============================================================
+
+fastapi==0.115.6
+uvicorn==0.32.1
+
+langchain==1.2.13
+langchain-core==1.2.23
+langchain-community==0.4.1
+langchain-classic==1.0.3
+langchain-openai==1.1.12
+langchain-qdrant==1.1.0
+langchain-text-splitters==1.1.1
+
+qdrant-client==1.19.1
+
+sentence-transformers==5.4.1
+
+requests==2.33.0
+beautifulsoup4==4.14.3

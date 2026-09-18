@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>陈大师 · 聊天机器人嵌入演示</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --text:#1f2328; --muted:#6b7280;
+    --blue:#2563eb; --blue-bg:#eff4ff; --gold:#b45309; --gold-bg:#fffbeb;
+    --green:#15803d;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.75;
+  }
+  code{background:#eef1f4;padding:2px 6px;border-radius:4px;
+       font-family:Consolas,Monaco,monospace;font-size:13px;}
+
+  /* ============ 顶部设置栏 ============ */
+  #bar{
+    background:#1e2430; color:#e6edf3; padding:10px 18px;
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+    font-size:13px; position:sticky; top:0; z-index:50;
+  }
+  #bar .ttl{font-weight:700;color:#fff;}
+  #bar input{
+    flex:1; min-width:260px; background:#2b3340; border:1px solid #3d4653;
+    color:#e6edf3; padding:6px 10px; border-radius:6px; font-size:13px;
+    font-family:Consolas,Monaco,monospace;
+  }
+  #bar input:focus{outline:none;border-color:var(--blue);}
+  #bar button{
+    background:#3d4653; color:#e6edf3; border:none; padding:6px 13px;
+    border-radius:6px; cursor:pointer; font-size:13px;
+  }
+  #bar button:hover{background:#4b5563;}
+  #bar button.on{background:var(--blue);color:#fff;}
+  #bar .hint{color:#8b96a3;font-size:12px;}
+
+  /* ============ 模拟的网站内容区 ============ */
+  .site{max-width:880px;margin:0 auto;padding:40px 24px 120px;}
+  .hero{
+    background:#fff;border:1px solid var(--line);border-radius:14px;
+    padding:34px 32px;margin-bottom:20px;position:relative;overflow:hidden;
+  }
+  .hero::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+    background:linear-gradient(180deg,var(--gold),#f59e0b);
+  }
+  .hero h1{margin:0 0 8px;font-size:27px;letter-spacing:-.5px;}
+  .hero p{margin:6px 0 0;color:var(--muted);}
+  .hero .who{font-size:13px;color:var(--gold);font-weight:600;letter-spacing:.5px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;}
+  .card{
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+  }
+  .card .h{font-weight:700;margin-bottom:6px;}
+  .card .b{font-size:13.5px;color:#4b5563;}
+  .card .b code{font-size:12px;}
+
+  /* ============ 右下角悬浮气泡 ============ */
+  #bubbleBtn{
+    position:fixed; right:26px; bottom:26px; z-index:60;
+    width:58px; height:58px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,#7c3aed,#2563eb); color:#fff;
+    font-size:24px; box-shadow:0 8px 24px rgba(37,99,235,.35);
+    transition:transform .18s ease;
+  }
+  #bubbleBtn:hover{transform:scale(1.07);}
+  #bubbleBtn.hide{display:none;}
+
+  #bubbleWin{
+    position:fixed; right:26px; bottom:26px; z-index:70;
+    width:400px; height:620px; max-height:calc(100vh - 52px);
+    background:#fff; border-radius:14px; overflow:hidden;
+    box-shadow:0 16px 48px rgba(0,0,0,.22);
+    display:none; flex-direction:column;
+  }
+  #bubbleWin.open{display:flex;}
+  #bubbleWin .top{
+    background:#1e2430;color:#fff;padding:11px 14px;
+    display:flex;align-items:center;justify-content:space-between;font-size:14px;
+  }
+  #bubbleWin .top .n{font-weight:600;}
+  #bubbleWin .top button{
+    background:transparent;border:none;color:#c9d1d9;font-size:18px;
+    cursor:pointer;line-height:1;padding:2px 6px;
+  }
+  #bubbleWin .top button:hover{color:#fff;}
+  #bubbleWin iframe{flex:1;width:100%;border:none;background:#fff;}
+
+  /* ============ 全屏模式 ============ */
+  #fullWrap{
+    position:fixed; inset:0; z-index:80; background:#fff;
+    display:none; flex-direction:column;
+  }
+  #fullWrap.open{display:flex;}
+  #fullWrap .top{
+    background:#1e2430;color:#fff;padding:11px 16px;
+    display:flex;align-items:center;justify-content:space-between;font-size:14px;
+  }
+  #fullWrap .top button{
+    background:#3d4653;color:#fff;border:none;padding:6px 14px;
+    border-radius:6px;cursor:pointer;font-size:13px;
+  }
+  #fullWrap iframe{flex:1;width:100%;border:none;}
+
+  @media(max-width:520px){
+    #bubbleWin{width:calc(100vw - 24px);right:12px;bottom:12px;height:calc(100vh - 90px);}
+    #bubbleBtn{right:16px;bottom:16px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== 顶部设置栏（可改地址、切模式） ===================== -->
+<div id="bar">
+  <span class="ttl">🔧 嵌入设置</span>
+  <input id="urlInput" type="text" value="http://localhost/chatbot/6eXPfQVJ0W1cUR6J"
+         placeholder="粘贴你的 Dify 嵌入地址">
+  <button id="btnApply">应用地址</button>
+  <button id="btnFull">全屏模式</button>
+  <span class="hint">改完地址点「应用」，或直接回车</span>
+</div>
+
+<!-- ===================== 模拟的网站正文（这里可以是你的任何页面） ===================== -->
+<div class="site">
+  <div class="hero">
+    <div class="who">陈玉楼 · 人称陈大师</div>
+    <h1>阴阳五行 · 命理推演</h1>
+    <p>精通八字排盘、紫微斗数、姓名测算。<span style="color:var(--blue)">点右下角的按钮开始问卦 ↓</span></p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="h">📖 下面这段就是你要贴到网站里的代码</div>
+      <div class="b">
+        从 Dify 复制出来的 iframe 就是它。本页面已经帮你把它接好了，
+        <strong>直接双击打开就能看到效果</strong>。
+      </div>
+    </div>
+    <div class="card">
+      <div class="h">⚠️ 换地址只需改一处</div>
+      <div class="b">
+        顶部输入框改完点「应用地址」，<strong>右下角浮窗和全屏模式会同时跟着换</strong>，
+        不用改代码。
+      </div>
+    </div>
+    <div class="card">
+      <div class="h">🌐 想让别人也能访问</div>
+      <div class="b">
+        必须把 <code>localhost</code> 换成公网地址（域名或 <code>IP:端口</code>）。
+        原因看下面这段。
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;border-left:4px solid var(--gold);border-radius:0 12px 12px 0;">
+    <div class="h" style="color:var(--gold)">⚠️ 最关键的一个坑：localhost 只在你自己电脑上有效</div>
+    <div class="b">
+      <code>localhost</code> 的意思是「<strong>打开这个页面的那台电脑</strong>」。<br>
+      在你这儿测试没问题，因为 Dify 就跑在你这台机器上。<br>
+      但如果你把这个页面发给朋友、或者放到服务器上——他的浏览器会把 <code>localhost</code>
+      理解成<strong>他自己的电脑</strong>，而他的电脑上没有 Dify，结果就是<strong>一片空白</strong>。<br><br>
+      <strong>解决办法：</strong>把地址换成能让对方访问到的形式，比如
+      <code>http://你的公网IP:端口/chatbot/xxx</code>，或者绑个域名。内网的话用
+      <code>http://192.168.x.x/chatbot/xxx</code>（同一个 WiFi 下可用）。
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 右下角悬浮按钮 + 浮窗 ===================== -->
+<button id="bubbleBtn" title="找我算卦">💬</button>
+
+<div id="bubbleWin">
+  <div class="top">
+    <span class="n">陈大师 · 在线</span>
+    <button id="bubbleClose" title="收起">✕</button>
+  </div>
+  <!-- ★ 就是它：Dify 给的 iframe -->
+  <iframe id="iframeBubble"
+          src="http://localhost/chatbot/6eXPfQVJ0W1cUR6J"
+          frameborder="0"
+          allow="microphone">
+  </iframe>
+</div>
+
+<!-- ===================== 全屏模式 ===================== -->
+<div id="fullWrap">
+  <div class="top">
+    <span>陈大师 · 全屏</span>
+    <button id="fullClose">退出全屏</button>
+  </div>
+  <iframe id="iframeFull"
+          src="http://localhost/chatbot/6eXPfQVJ0W1cUR6J"
+          frameborder="0"
+          allow="microphone">
+  </iframe>
+</div>
+
+<script>
+  // 默认地址（和顶部输入框一致，改地址时两处一起变）
+  const DEFAULT_URL = "http://localhost/chatbot/6eXPfQVJ0W1cUR6J";
+
+  const urlInput   = document.getElementById("urlInput");
+  const iframeBub  = document.getElementById("iframeBubble");
+  const iframeFull = document.getElementById("iframeFull");
+
+  const bubbleBtn   = document.getElementById("bubbleBtn");
+  const bubbleWin   = document.getElementById("bubbleWin");
+  const bubbleClose = document.getElementById("bubbleClose");
+
+  const fullWrap  = document.getElementById("fullWrap");
+  const fullClose = document.getElementById("fullClose");
+  const btnFull   = document.getElementById("btnFull");
+  const btnApply  = document.getElementById("btnApply");
+
+  // ---------- 1. 应用新地址：两个 iframe 一起换 ----------
+  function applyUrl() {
+    let url = urlInput.value.trim();
+    if (!url) { url = DEFAULT_URL; urlInput.value = url; }
+    // 没写协议就自动补 http://
+    if (!/^https?:\/\//i.test(url)) { url = "http://" + url; urlInput.value = url; }
+    iframeBub.src  = url;
+    iframeFull.src = url;
+    console.log("已切换到:", url);
+  }
+  btnApply.addEventListener("click", applyUrl);
+  urlInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") applyUrl();
+  });
+
+  // ---------- 2. 右下角浮窗的开关 ----------
+  bubbleBtn.addEventListener("click", function () {
+    bubbleWin.classList.add("open");
+    bubbleBtn.classList.add("hide");        // 打开浮窗时把圆按钮藏起来
+  });
+  bubbleClose.addEventListener("click", function () {
+    bubbleWin.classList.remove("open");
+    bubbleBtn.classList.remove("hide");
+  });
+
+  // ---------- 3. 全屏模式 ----------
+  btnFull.addEventListener("click", function () {
+    fullWrap.classList.add("open");
+  });
+  fullClose.addEventListener("click", function () {
+    fullWrap.classList.remove("open");
+  });
+
+  // ---------- 4. 按 Esc 关闭 ----------
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      fullWrap.classList.remove("open");
+      bubbleWin.classList.remove("open");
+      bubbleBtn.classList.remove("hide");
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能体项目 · 学习指南</title>
+<style>
+  :root{
+    --bg:#f6f7f9;
+    --card:#ffffff;
+    --line:#e3e6ea;
+    --text:#1f2328;
+    --muted:#6b7280;
+    --blue:#2563eb;
+    --blue-bg:#eff4ff;
+    --green:#15803d;
+    --green-bg:#f0fdf4;
+    --amber:#b45309;
+    --amber-bg:#fffbeb;
+    --red:#b91c1c;
+    --red-bg:#fef2f2;
+    --purple:#6d28d9;
+    --purple-bg:#f5f3ff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.75;
+  }
+  .wrap{display:flex; max-width:1400px; margin:0 auto;}
+
+  /* 侧边导航 */
+  nav{
+    width:230px; flex:0 0 230px; position:sticky; top:0; height:100vh;
+    overflow-y:auto; padding:24px 16px; border-right:1px solid var(--line);
+    background:#fbfcfd;
+  }
+  nav h2{font-size:13px; color:var(--muted); margin:0 0 12px 8px; letter-spacing:1px;}
+  nav a{
+    display:block; padding:7px 12px; margin:2px 0; border-radius:6px;
+    color:var(--text); text-decoration:none; font-size:14px;
+  }
+  nav a:hover{background:var(--blue-bg); color:var(--blue);}
+  nav .sub{padding-left:26px; font-size:13px; color:var(--muted);}
+
+  /* 正文 */
+  main{flex:1; padding:36px 44px 120px; min-width:0;}
+  h1{font-size:30px; margin:0 0 8px; letter-spacing:-.5px;}
+  .lead{color:var(--muted); margin-bottom:28px; font-size:15px;}
+  h2{
+    font-size:22px; margin:52px 0 16px; padding-bottom:10px;
+    border-bottom:2px solid var(--line); scroll-margin-top:20px;
+  }
+  h3{font-size:17px; margin:28px 0 10px; color:#111827;}
+  h4{font-size:15px; margin:18px 0 8px; color:#374151;}
+  p{margin:8px 0;}
+  code{
+    background:#eef1f4; padding:2px 6px; border-radius:4px;
+    font-family:"Cascadia Code",Consolas,Monaco,monospace; font-size:13px;
+  }
+  pre{
+    background:#1e2430; color:#e6edf3; padding:14px 16px; border-radius:8px;
+    overflow-x:auto; font-family:"Cascadia Code",Consolas,Monaco,monospace;
+    font-size:13px; line-height:1.65; margin:12px 0;
+  }
+  pre .c{color:#7d8b9b;}   /* 注释 */
+  pre .k{color:#ff9d76;}   /* 关键字 */
+  pre .s{color:#a5d6a7;}   /* 字符串 */
+  pre .v{color:#8ec7ff;}   /* 变量/强调 */
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin:14px 0;}
+  .box{border-left:4px solid var(--blue); background:var(--blue-bg); padding:12px 16px; border-radius:0 8px 8px 0; margin:14px 0;}
+  .box.warn{border-color:var(--amber); background:var(--amber-bg);}
+  .box.danger{border-color:var(--red); background:var(--red-bg);}
+  .box.ok{border-color:var(--green); background:var(--green-bg);}
+  .box .t{font-weight:700; margin-bottom:4px; font-size:14px;}
+  .box.warn .t{color:var(--amber);}
+  .box.danger .t{color:var(--red);}
+  .box.ok .t{color:var(--green);}
+  .box .t{color:var(--blue);}
+
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:14px; background:var(--card);}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:#f0f2f5; font-weight:600;}
+  tr:nth-child(even) td{background:#fafbfc;}
+
+  /* 流程盒子 */
+  .flow{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:22px; margin:16px 0;}
+  .fb{background:#f8fafc; border:1px solid var(--line); border-left:4px solid var(--blue);
+      border-radius:6px; padding:11px 14px; margin:0 0 6px; position:relative;}
+  .fb.g{border-left-color:var(--green);}
+  .fb.p{border-left-color:var(--purple);}
+  .fb.a{border-left-color:var(--amber);}
+  .fb .n{font-weight:700; font-size:14px;}
+  .fb .d{font-size:13px; color:var(--muted); margin-top:2px;}
+  .fb .file{font-size:12px; color:#9aa4b0; font-family:Consolas,monospace;}
+  .arrow{text-align:center; color:#b6bfc9; font-size:18px; line-height:1; margin:2px 0;}
+  .branch{margin-left:26px; border-left:2px dashed #d5dbe2; padding-left:18px;}
+
+  /* 网格卡片 */
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin:14px 0;}
+  .gc{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px;}
+  .gc .h{font-weight:700; font-size:15px; margin-bottom:6px;}
+  .gc .b{font-size:13.5px; color:#4b5563;}
+
+  /* 术语表 */
+  dt{font-weight:700; margin-top:14px; color:var(--blue); font-size:15px;}
+  dd{margin:2px 0 0 0; padding-left:2px;}
+
+  .tag{display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px;
+       background:var(--blue-bg); color:var(--blue); margin-left:6px; vertical-align:middle;}
+  .tag.g{background:var(--green-bg); color:var(--green);}
+  .tag.a{background:var(--amber-bg); color:var(--amber);}
+
+  .q{font-weight:700; color:var(--purple);}
+  .num{
+    display:inline-block; width:22px; height:22px; line-height:22px; text-align:center;
+    background:var(--blue); color:#fff; border-radius:50%; font-size:12px; margin-right:6px;
+  }
+  .src{font-size:12px; color:#9aa4b0; font-family:Consolas,monospace;}
+  @media(max-width:900px){ nav{display:none;} main{padding:20px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#ch0">0 · 先看全局</a>
+  <a href="#ch1">1 · 四个文件的分工</a>
+  <a href="#ch2">2 · 一条消息的一生 ★</a>
+  <a href="#ch3">3 · 搞定「参数传来传去」</a>
+  <a href="#ch4">4 · 必懂的 8 个概念</a>
+  <a href="#ch5">5 · 记忆系统</a>
+  <a href="#ch6">6 · 知识库（RAG）</a>
+  <a href="#ch7">7 · 工具是怎么工作的</a>
+  <a href="#ch8">8 · 接口速查表</a>
+  <a href="#ch9">9 · 踩过的坑</a>
+  <a href="#ch10">10 · Python 语法速查</a>
+  <a href="#ch11">11 · 动手练习</a>
+</nav>
+
+<main>
+<h1>智能体项目 · 学习指南</h1>
+<p class="lead">从零讲起：这份文档假设你只会最基础的 Python，把「看不懂的代码」和「传参怎么绕」一次讲清楚。<br>
+所有行号对应当前代码，改过代码后可能对不上，但结构不会变。</p>
+
+<div class="box ok">
+  <div class="t">配套文档 👉 <a href="开发顺序.html" style="color:var(--green);font-weight:700">《开发顺序.html》</a></div>
+  这份讲「<strong>概念和参数</strong>」，那份讲「<strong>代码是怎么一层层长出来的</strong>」。<br>
+  如果你现在的困惑是「<strong>代码太多，不知道从哪开始看</strong>」，<strong>先看那份</strong>（15 层洋葱式还原），看懂了再回这份查细节。
+</div>
+
+<div class="box">
+  <div class="t">怎么用这份文档</div>
+  第 0、2、3 章是核心，解决你说的"思路乱"和"参数传来传去"。<br>
+  第 4、10 章解决"代码看不懂"，可以随时回来查。<br>
+  其余章节按需翻阅。
+</div>
+
+<!-- ===================== 第 0 章 ===================== -->
+<h2 id="ch0">0 · 先看全局：这个项目到底在干什么</h2>
+
+<p>一句话概括：<strong>它把 Kimi 大模型包装成一个「算命先生陈玉楼」，能聊天、能记住你、能查本地资料、能上网搜。</strong></p>
+
+<p>技术上拆成三件事：</p>
+<div class="grid">
+  <div class="gc"><div class="h">🧠 一个大脑</div><div class="b">大模型（Kimi）。它负责理解你说的话、决定要不要用工具、最后组织语言回答你。</div></div>
+  <div class="gc"><div class="h">🛠️ 一堆工具</div><div class="b">查知识库、算八字、抓网页、联网搜索。<strong>大模型自己不能上网也不能算八字</strong>，只能"伸手要工具"，拿到结果再回答。</div></div>
+  <div class="gc"><div class="h">📦 一份记忆</div><div class="b">存在硬盘上的 json 文件。聊天是"无状态"的——每次请求对服务器都是陌生人，靠读文件才想起你是谁。</div></div>
+</div>
+
+<h3>请求是怎么跑起来的（鸟瞰图）</h3>
+<div class="flow">
+  <div class="fb"><div class="n">你的浏览器 / 接口测试工具</div><div class="d">发一个请求：<code>POST /chat?query=你好啊</code></div></div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">FastAPI（Web 层）</div><div class="d">接到请求，找到对应的函数 <code>chat()</code>，把参数塞进去</div><div class="file">server.py 第 415-433 行</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb p"><div class="n">Master（业务逻辑层）</div><div class="d">判情绪 → 选语气 → 造 Agent → 让模型回答 → 存记忆</div><div class="file">server.py 第 216-400 行</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb g"><div class="n">工具层 Mytools.py</div><div class="d">模型需要查东西时，调用这里的函数</div><div class="file">Mytools.py</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb a"><div class="n">外部世界</div><div class="d">Kimi 接口 / 八字接口 / 博查搜索 / 本地向量库 local_qdrant / 记忆 json</div></div>
+</div>
+
+<div class="box ok">
+  <div class="t">最重要的一条规律</div>
+  <strong>数据永远是从上往下传、从下往上回。</strong>Web 层不认识大模型，业务层不认识 HTTP，工具层不认识 Web 层。
+  每层只做自己的事，传的只是一个个普通的参数（字符串、字典）。所谓"参数传来传去"，本质就是<strong>上一层把值交给下一层的函数</strong>，没有魔法。
+</div>
+
+<!-- ===================== 第 1 章 ===================== -->
+<h2 id="ch1">1 · 四个文件的分工</h2>
+
+<table>
+  <tr><th style="width:130px">文件</th><th style="width:110px">角色</th><th>说明</th></tr>
+  <tr>
+    <td><code>config.py</code></td><td>配置中心</td>
+    <td>只放三样东西：密钥、模型名、接口地址。<strong>它不 import 自己的任何文件</strong>，所以谁都能安全地导入它。</td>
+  </tr>
+  <tr>
+    <td><code>Mytools.py</code></td><td>工具箱</td>
+    <td>五个工具函数 + 两个共享资源（<code>EMBEDDINGS</code> 嵌入模型、<code>TOOL_MODEL</code> 模型客户端）。<strong>严禁 import server.py</strong>。</td>
+  </tr>
+  <tr>
+    <td><code>server.py</code></td><td>主控</td>
+    <td>干所有杂活：起 Web 服务、定义 Master 类、管记忆、注册路由。<strong>它是唯一 import 别人的文件。</strong></td>
+  </tr>
+  <tr>
+    <td><code>test_kb.py</code></td><td>测试脚本</td>
+    <td>独立于服务，专门用来验证知识库能不能存、能不能搜。你的库里那 3 条测试数据就是它塞进去的。</td>
+  </tr>
+</table>
+
+<h3>为什么这么分？——「循环导入」这道坎</h3>
+<p>你可能会问：为什么不写成一个大文件？因为会踩这个坑：</p>
+
+<pre><span class="c"># 如果 server.py 顶部写 from Mytools import x</span>
+<span class="c"># 同时 Mytools.py 顶部写 from server import y</span>
+<span class="c"># Python 就会陷入死循环：我要导入你 → 你要导入我 → ... → ImportError</span></pre>
+
+<p>解决办法就是<strong>单向依赖</strong>：</p>
+<div class="flow">
+  <div class="fb"><div class="n">config.py</div><div class="d">最底层，谁都可以用，它谁也不用</div></div>
+  <div class="arrow">↑ 被导入</div>
+  <div class="fb g"><div class="n">Mytools.py</div><div class="d">可以用 config，可以langchain，<strong>但绝不能用 server</strong></div></div>
+  <div class="arrow">↑ 被导入</div>
+  <div class="fb p"><div class="n">server.py</div><div class="d">最上层，可以用 config，可以用 Mytools</div></div>
+</div>
+
+<div class="box danger">
+  <div class="t">记住这条铁律</div>
+  <strong>箭头只能朝上。</strong>以后你写新文件时问自己一句："它会 import server.py 吗？" 会——那就坏了，得把公用部分下沉到 config 或单独文件。
+</div>
+
+<!-- ===================== 第 2 章 ===================== -->
+<h2 id="ch2">2 · 一条消息的一生 ★ 核心章节</h2>
+
+<p>这是解开"参数传来传去"迷雾的关键。我们跟着一句话走完全程。</p>
+
+<pre><span class="c"># 你在浏览器/Postman 里发：</span>
+POST http://127.0.0.1:8000/chat?query=我最近运气很差&session_id=abc</pre>
+
+<div class="flow">
+  <div class="fb"><div class="n"><span class="num">1</span>Web 层接单</div>
+    <div class="d">FastAPI 看到路径是 <code>/chat</code>、方法是 POST，就调用下面挂的函数。<br>
+    <strong>URL 里的 ?query=xxx&session_id=abc 会被自动塞进同名参数</strong>：</div>
+    <div class="file">server.py:421-422</div>
+  </div>
+<pre><span class="k">def</span> <span class="v">chat</span>(query: str = <span class="s">""</span>, session_id: str = <span class="s">"default"</span>):
+    <span class="c"># query      = "我最近运气很差"   ← 自动填好</span>
+    <span class="c"># session_id = "abc"             ← 自动填好</span></pre>
+  <div class="arrow">↓</div>
+
+  <div class="fb"><div class="n"><span class="num">2</span>转交给业务层</div>
+    <div class="d">Web 层自己不干活，直接把两个参数原样传下去：</div>
+    <div class="file">server.py:428</div>
+  </div>
+<pre>out = MASTER.run(query, session_id)   <span class="c"># 位置参数，按顺序对应</span></pre>
+  <div class="arrow">↓</div>
+
+  <div class="fb p"><div class="n"><span class="num">3</span>Master.run 开始编排 ★</div>
+    <div class="d">这里是全项目最核心的 5 步，<strong>参数的形状在每一步都在变</strong>：</div>
+    <div class="file">server.py:342-365</div>
+  </div>
+<pre><span class="k">def</span> <span class="v">run</span>(<span class="v">self</span>, query, session_id=<span class="s">"default"</span>):
+    <span class="c"># 字符串 → 字符串</span>
+    emotion  = <span class="v">self</span>.qingxu_chain(query)        <span class="c"># ① "depressed"</span>
+
+    <span class="c"># 字符串 → 一段话（语气说明）</span>
+    role_set = <span class="v">self</span>.get_role_set(emotion)      <span class="c"># ② "- 你会以温暖、鼓励的语气..."</span>
+
+    <span class="c"># 一段话 → 一个执行器对象</span>
+    executor = <span class="v">self</span>.create_executor(role_set)  <span class="c"># ③ 把语气拼进提示词</span>
+
+    <span class="c"># 字典 → 字典 ★★ 关键在这一步</span>
+    result = executor.invoke({
+        <span class="s">"input"</span>:       query,                       <span class="c"># ④-a 用户原文</span>
+        <span class="s">"memory_text"</span>: get_memory_text(session_id=session_id),  <span class="c"># ④-b 记忆</span>
+    })
+    answer = result[<span class="s">"output"</span>]                   <span class="c"># 从返回字典里取答案</span>
+
+    <span class="v">self</span>.add_memory(query, answer, <span class="v">self</span>.chatmodel, session_id)  <span class="c"># ⑤ 存盘</span>
+
+    <span class="k">return</span> {<span class="s">"emotion"</span>: emotion, <span class="s">"answer"</span>: answer}</pre>
+  <div class="arrow">↓</div>
+
+  <div class="fb g"><div class="n"><span class="num">4</span>回到 Web 层，打包成 JSON 返回</div>
+    <div class="file">server.py:430</div>
+  </div>
+<pre><span class="k">return</span> {<span class="s">"emotion"</span>: out[<span class="s">"emotion"</span>], <span class="s">"response"</span>: out[<span class="s">"answer"</span>]}
+<span class="c"># 注意：内部叫 answer，对外改名叫 response（历史遗留，两个名字指的是同一个东西）</span></pre>
+</div>
+
+<div class="box warn">
+  <div class="t">⭐ 最容易卡住的一步：第 ④ 步那个字典</div>
+  为什么 <code>invoke()</code> 里非要写成字典？因为提示词模板里写着<b>占位符</b>：
+<pre style="margin:8px 0 0">("user", "{input}")                              <span class="c"># 要一个叫 input 的键</span>
+("system", "【你们之前聊过的内容】\n{memory_text}")   <span class="c"># 要一个叫 memory_text 的键</span></pre>
+  <strong>字典的 key 必须和花括号里的名字一字不差。</strong>少一个就报 <code>InputFormatKeyError</code>，多传入 key 没用到则无所谓。
+</div>
+
+<h3>模型内部那一圈（上面第 ④ 步里面发生的事）</h3>
+<p><code>executor.invoke()</code> 不是"问一次就答"，而是一个<strong>可能反复好几轮的循环</strong>：</p>
+
+<div class="flow">
+  <div class="fb"><div class="n">轮次 1：思考</div><div class="d">模型拿到「人设 + 记忆 + 你的问题 + 工具清单」，判断：我需不需要工具？</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb a"><div class="n">轮次 2：伸手要工具</div><div class="d">模型的回答不是文字，而是"我想调用 <code>bazi_cesuan</code>，参数是 xxx"<br>
+  终端里你会看到：<code>Invoking: bazi_cesuan with {...}</code></div></div>
+  <div class="arrow">↓</div>
+  <div class="fb g"><div class="n">轮次 3：执行工具</div><div class="d">AgentExecutor 真的去跑 Mytools 里的函数，拿到返回值</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">轮次 4：带着结果再问模型</div><div class="d">工具返回值被记进「草稿纸」，模型看到后决定：还要再调一个工具吗？还是可以回答了？</div></div>
+  <div class="arrow">↓ ↺ 需要就回到轮次 2</div>
+  <div class="fb p"><div class="n">结束：给出最终答案</div><div class="d">模型输出纯文字，放进 <code>result["output"]</code></div></div>
+</div>
+
+<div class="box">
+  <div class="t">草稿纸是什么？</div>
+  就是提示词里那行 <code>MessagesPlaceholder("agent_scratchpad")</code>。它记录了「我刚才调了什么工具、工具返回了什么」，
+  让下一轮询问时模型能想起来。<strong>这一行删掉会直接报错</strong>，Agent 靠它才能多轮思考。
+</div>
+
+<!-- ===================== 第 3 章 ===================== -->
+<h2 id="ch3">3 · 专门搞定「参数传来传去」</h2>
+
+<p>你说最晕的是这个。其实 Python 传参只有三种形式，不会第四种：</p>
+
+<table>
+  <tr><th style="width:150px">形式</th><th>例子</th><th>什么时候用</th></tr>
+  <tr>
+    <td><strong>位置参数</strong></td>
+    <td><code>add_memory(query, answer, chatmodel, session_id)</code></td>
+    <td>参数少、顺序明显时。<strong>必须按定义顺序写。</strong></td>
+  </tr>
+  <tr>
+    <td><strong>关键字参数</strong></td>
+    <td><code>get_memory_text(session_id=session_id)</code></td>
+    <td>参数多、或者想跳过中间某个时用。<strong>推荐常用这个</strong>，不怕顺序搞错。</td>
+  </tr>
+  <tr>
+    <td><strong>字典</strong></td>
+    <td><code>executor.invoke({"input":..., "memory_text":...})</code></td>
+    <td>LangChain 的约定：一次性传一堆"变量名→值"。<strong>key 要和模板占位符同名。</strong></td>
+  </tr>
+</table>
+
+<h3>本项目的「参数变形记」对照表</h3>
+<p>同一份数据在不同层有不同的名字，这是最让人迷糊的地方。对照着看：</p>
+
+<table>
+  <tr><th style="width:180px">它所表示的东西</th><th>第 1 层（Web）</th><th>第 2 层（Master）</th><th>第 3 层（模型）</th><th>回来时</th></tr>
+  <tr>
+    <td>用户说的话</td>
+    <td><code>query</code></td>
+    <td><code>query</code></td>
+    <td><code>{input}</code></td>
+    <td><code>result["output"]</code> → <code>answer</code> → <code>response</code></td>
+  </tr>
+  <tr>
+    <td>会话标识</td>
+    <td><code>session_id</code></td>
+    <td><code>session_id</code></td>
+    <td>—</td>
+    <td>从不返回</td>
+  </tr>
+  <tr>
+    <td>历史记忆</td>
+    <td>—</td>
+    <td><code>get_memory_text()</code> 的结果</td>
+    <td><code>{memory_text}</code></td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>情绪标签</td>
+    <td>—</td>
+    <td><code>emotion</code></td>
+    <td>—</td>
+    <td><code>emotion</code>（原样带回去）</td>
+  </tr>
+</table>
+
+<h3>三个「为什么会这样写」的答疑</h3>
+
+<dl>
+  <dt><span class="q">Q：</span>为什么 <code>create_executor</code> 每次对话都要重新造一个？不能启动时候造好吗？</dt>
+  <dd>
+    因为<strong>每次的情绪不同，语气就不同</strong>，而语气是拼进 system 提示词的。要换语气就只能重造。
+    这是一个<strong>用性能换灵活</strong>的设计——好在它很轻量（不重新加载模型，只是拼字符串）。<br>
+    <code>__init__</code> 里那个 <code>self.agent_executor</code> 是用「default 语气」造的备用件，目前 <code>run()</code> 并没用它。
+  </dd>
+
+  <dt><span class="q">Q：</span><code>self.xxx</code> 是什么？为什么有的函数带 self 有的不带？</dt>
+  <dd>
+    <code>self</code> = "这个对象自己"。写在 <code>class Master:</code> 里面的函数叫<strong>方法</strong>，第一个参数必须是 <code>self</code>，
+    调用时你不用传，Python 自动填。通过 <code>self.chatmodel</code> 存在对象上的东西，<strong>所有方法都能共享</strong>。<br>
+    <code>load_memory()</code>、<code>add_memory()</code> 这些写在 class 外面，叫<strong>普通函数</strong>，没有 self，直接用就行。<br>
+    <strong>一句话：需要共享状态（模型、工具清单）的就放进类，不需要的就写外面。</strong>
+  </dd>
+
+  <dt><span class="q">Q：</span>为什么到处看到 <code>= "default"</code> 这种写法？</dt>
+  <dd>
+    这叫<strong>默认参数</strong>。调用时不传这个参数，就自动用默认值。
+    所以 <code>/chat</code> 不写 <code>session_id</code> 也能跑——它自动按 <code>"default"</code> 会话处理，
+    读写的还是老文件 <code>memory.json</code>，你的旧数据不会丢。
+  </dd>
+</dl>
+
+<!-- ===================== 第 4 章 ===================== -->
+<h2 id="ch4">4 · 必懂的 8 个概念（白话版）</h2>
+
+<dl>
+  <dt>① <code>@tool</code> 装饰器</dt>
+  <dd>
+    在函数头顶加一行 <code>@tool</code>，就把普通函数变成了"大模型可以调用的工具"。它自动帮模型生成三样信息：
+    <table style="margin-top:8px">
+      <tr><th style="width:200px">来源</th><th>作用</th></tr>
+      <tr><td>函数名</td><td>工具叫什么，模型就说这个名字</td></tr>
+      <tr><td><strong>函数正下方的文档字符串</strong></td><td><strong>最重要！</strong>说明书。模型靠它决定"这种情况该不该用它"</td></tr>
+      <tr><td>参数的 <code>: str</code> 类型标注</td><td>告诉模型要传什么格式的值</td></tr>
+    </table>
+    <div class="box warn" style="margin-top:10px"><div class="t">写工具的第一要务</div>
+    把<code>"""文档字符串"""</code>写清楚。<b>模型看不见你的函数体写了什么逻辑，它只读这段说明。</b>
+    说明写得含糊 → 模型不知道什么时候该用它 → 表现就是"明明有工具它却说没有"。</div>
+  </dd>
+
+  <dt>② LCEL 管道符号 <code>|</code></dt>
+  <dd>
+    <code>a | b | c</code> 就是 <code>c(b(a(x)))</code>：左边的结果当右边的输入，串成流水线。<br>
+    例：<code>prompt | model | parser</code> 读作「填好提示词 → 丢给模型 → 把回答解析成纯文本」。<br>
+    <code>chain.invoke({"input": "你好"})</code> 就是往管道开头塞数据，拿末端的输出。
+  </dd>
+
+  <dt>③ <code>ChatPromptTemplate</code> 提示词模板</dt>
+  <dd>
+    一份带洞的信。<code>{input}</code> 是洞，<code>invoke()</code> 时填进去。<br>
+    <span class="tag">注意</span> 如果你想在模板里写一个<strong>真正的大括号</strong>（比如 JSON 示例），必须写成双括号 <code>{{ }}</code>，
+    否则会被当成占位符。<code>SUMMARY_PROMPT</code> 里那行 JSON 示例就是这么写的。
+  </dd>
+
+  <dt>④ <code>MessagesPlaceholder</code></dt>
+  <dd>
+    一个"留白区"，运行时会被替换成一串消息。本项目只用它占位 <code>agent_scratchpad</code>（Agent 草稿纸），<strong>不能删</strong>。
+  </dd>
+
+  <dt>⑤ <code>AgentExecutor</code></dt>
+  <dd>
+    干脏活的管家：调模型 → 发现模型要调工具 → 真的去执行 → 把结果塞回给模型 → 再问…… 直到模型说"我可以回答了"。<br>
+    它返回的是一个<strong>字典</strong>，我们只用 <code>result["output"]</code> 这一项。<br>
+    <code>verbose=True</code> 让它把每一步打印到终端，<strong>排错全靠它</strong>——有没有调工具、调了哪个、参数是什么，一目了然。
+  </dd>
+
+  <dt>⑥ Embedding（嵌入模型）</dt>
+  <dd>
+    把文字变成一串数字（本项目是 512 个浮点数，叫 512 维）——可以想象成"这段话在意义地图上的坐标"。<br>
+    意思相近的话，坐标就靠近。所以检索不是比关键词，而是<strong>比坐标距离</strong>，这就是它能"理解同义词"的原因。<br>
+    <span class="tag a">坑</span> <strong>存和取必须用同一个模型</strong>。换模型等于换了一套坐标系，新老数据之间距离毫无意义。
+  </dd>
+
+  <dt>⑦ 向量数据库 Qdrant</dt>
+  <dd>
+    专门存「坐标 + 原文」的数据库，擅长"找最近的邻居"。<br>
+    你用的是<strong>本地文件版</strong>（<code>local_qdrant</code> 文件夹），它靠一个文件锁保证同一时刻只有一个进程能写。
+    → 所以用完必须 <code>client.close()</code>，服务跑着的时候不能再去写库。
+  </dd>
+
+  <dt>⑧ 模块级代码 &amp; 为什么要重启</dt>
+  <dd>
+    Python 里写在 class 外面、函数外面的代码，<strong>只在文件第一次被 import 时执行一次</strong>。<br>
+    <code>server.py</code> 第 404-410 行的 <code>MASTER = Master()</code> 就是这样——启动那一刻就把模型客户端、
+    工具清单、人设文本<strong>读进内存并冻结</strong>了。此后你改文件，内存里那份不会变。<br>
+    <div class="box danger" style="margin-top:8px"><div class="t">这条害过你两次</div>
+    「繁体字去不掉」「明明加了工具它却说没有」——<b>都是因为跑的是旧进程</b>。
+    改完 server.py / Mytools.py / config.py，<b>必须 Ctrl+C 停掉 uvicorn 再重启</b>。</div>
+  </dd>
+</dl>
+
+<!-- ===================== 第 5 章 ===================== -->
+<h2 id="ch5">5 · 记忆系统</h2>
+
+<h3>为什么要有记忆？</h3>
+<p>HTTP 是「无状态」的——每次请求对服务器都是全新的一次，它不记得你上一句说了什么。
+所以只能把对话写到硬盘，下次请求时读出来，塞进提示词里给模型看。</p>
+
+<h3>三层结构（越往上越不容易丢）</h3>
+<div class="flow">
+  <div class="fb p"><div class="n">第 1 层 · profile 用户档案</div>
+    <div class="d"><code>{"姓名":"张三","出生年月日":"1998-08-08"}</code><br>
+    <strong>永不压缩</strong>。为什么单独拎出来？因为姓名生辰这种事实一旦被摘要弄丢，后面八字都算不了。</div></div>
+  <div class="fb"><div class="n">第 2 层 · summary 历史摘要</div>
+    <div class="d">更早的对话压成 300 字以内的一段话。<strong>省 token</strong>，也避免上下文越来越长。</div></div>
+  <div class="fb g"><div class="n">第 3 层 · history 最近原文</div>
+    <div class="d">最近 3 轮原样保留，保证"刚才说到哪"不丢，对话才连贯。</div></div>
+</div>
+
+<h3>触发压缩的时机</h3>
+<pre>每轮聊天结束后：<span class="v">add_memory</span>() 检查 len(history) &gt; MEMORY_MAX(<span class="s">10</span>) ?
+    是 → <span class="v">compress_memory</span>(chatmodel, session_id)   <span class="c"># 让模型读一遍老的，写成摘要+档案</span>
+    否 → 什么都不做，继续攒着</pre>
+<p>压缩做的事：<strong>把最老的几条喂给模型 → 模型返回 {"summary":..., "profile":...} → 覆盖旧的、删掉那几条原文、只留最近 3 条。</strong></p>
+
+<div class="box warn">
+  <div class="t">为什么摘要要用第三人称？</div>
+  摘要每满 10 条就压一次，压个几十次后，如果让模型用"老夫记得…"这种角色口吻写，
+  它很容易开始<strong>添油加醋编故事</strong>。客观记录（"用户叫张三，1998年生"）稳定得多，
+  而且你打开 json 文件也能一眼看懂。人设交给 system prompt 去管，两件事分开。
+</div>
+
+<h3>会话隔离（session_id）</h3>
+<p>没有它之前，所有对话共用一个 <code>memory.json</code>，两个人同时聊会互相串台。现在：</p>
+<pre><span class="k">def</span> <span class="v">memory_file</span>(session_id=<span class="s">"default"</span>):
+    sid = <span class="s">""</span>.join(c <span class="k">for</span> c <span class="k">in</span> str(session_id) <span class="k">if</span> c.isalnum() <span class="k">or</span> c <span class="k">in</span> <span class="s">"-_"</span>) <span class="k">or</span> <span class="s">"default"</span>
+    <span class="k">if</span> sid == <span class="s">"default"</span>:
+        <span class="k">return</span> MEMORY_DIR / <span class="s">"memory.json"</span>          <span class="c"># 兼容旧数据</span>
+    <span class="k">return</span> MEMORY_DIR / (<span class="s">"memory_"</span> + sid + <span class="s">".json"</span>)</pre>
+<p>那行 <code>join</code> 看着唬人，其实就一句：<strong>把 session_id 里所有非字母数字的怪字符删掉</strong>，
+防止有人传 <code>../../etc/passwd</code> 这种路径，拼出错误的读取路径（安全问题）。</p>
+
+<!-- ===================== 第 6 章 ===================== -->
+<h2 id="ch6">6 · 知识库（RAG）</h2>
+
+<p>RAG 白话讲：<strong>先去资料库里翻出相关内容，塞进提示词，再让模型回答。</strong> 模型本身不知道你的命理资料，靠这个"开卷考试"。</p>
+
+<h3>存资料的流程（以抓网页为例）</h3>
+<div class="flow">
+  <div class="fb"><div class="n">1 · 抓网页</div><div class="d"><code>WebBaseLoader(url).load()</code> → 拿回一大段 HTML 正文</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">2 · 切片</div><div class="d">每 800 字切一块，相邻两块重叠 50 字。<br><strong>为什么要切？</strong>整页塞进去太长、太杂；切成小块才能精准匹配某一段。</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb a"><div class="n">3 · 转坐标</div><div class="d">用 EMBEDDINGS 把每块变成 512 维向量（embedding）</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb g"><div class="n">4 · 存库</div><div class="d"><code>store.add_documents(chunks)</code> 存进 <code>local_documents</code> 集合</div></div>
+</div>
+
+<h3>查资料的流程</h3>
+<div class="flow">
+  <div class="fb"><div class="n">用户提问</div><div class="d">"龙年运势怎么样"</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb a"><div class="n">问题也转坐标</div><div class="d">同一个 EMBEDDINGS 模型，同一个坐标系</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb g"><div class="n">找最近的邻居</div><div class="d">库里哪几块的坐标离它最近 → 返回那几块原文</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb p"><div class="n">塞进提示词</div><div class="d">资料 + 问题一起给模型 → 模型"照着资料答题"</div></div>
+</div>
+
+<div class="box danger">
+  <div class="t">两个必须一致，否则存进去查不到</div>
+  <strong>① 集合名</strong>：存和取必须同一个字符串（本项目用常量 <code>KB_COLLECTION</code> 统一）。<br>
+  <strong>② 嵌入模型</strong>：必须同一个。<code>OpenAIEmbeddings</code> 是 1536 维，你的库是 512 维，硬写会直接报维度不符。
+</div>
+
+<h3>搜索工具带来的「自学闭环」</h3>
+<div class="flow">
+  <div class="fb p"><div class="n">你问一个它不知道的问题</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">模型调用 <code>search_and_learn</code></div><div class="d">联网搜，拿回前 3 条结果</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb g"><div class="n">这 3 个网页自动学进知识库</div><div class="d">调 <code>learn_one_url()</code>，流程和上面存资料一样</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">下次遇到同类问题</div><div class="d">不用联网，直接从本地库检索到 → <strong>越用越懂</strong></div></div>
+</div>
+
+<p><strong>注意</strong>：每次搜索会往库里写 3 条，聊久了库会一直涨。觉得检索变杂时可以做个去重或清理。</p>
+
+<!-- ===================== 第 7 章 ===================== -->
+<h2 id="ch7">7 · 工具是怎么工作的</h2>
+
+<h3>现有五个工具一览表</h3>
+<table>
+  <tr><th style="width:190px">工具名</th><th>什么时候被用</th><th>干了什么</th></tr>
+  <tr><td><code>test</code></td><td>（基本不用）</td><td>教程遗留，返回字符串 "test"</td></tr>
+  <tr><td><code>get_info_from_local_db</code></td><td>问到命理资料、运势这类"库里有"的内容</td><td>检索本地向量库</td></tr>
+  <tr><td><code>bazi_cesuan</code></td><td>用户说了<strong>姓名+出生年月日</strong>，要算八字</td><td>让模型解析参数 → 调外部八字接口</td></tr>
+  <tr><td><code>learn_from_url</code></td><td>用户发来 http/https 链接</td><td>抓网页 → 切片 → 存库 → 返回正文</td></tr>
+  <tr><td><code>search_and_learn</code></td><td>遇到它不知道、需要联网查的事</td><td>博查搜索 → 前 3 条自动入库</td></tr>
+</table>
+
+<h3><code>bazi_cesuan</code> 详解：最容易看不懂的一个</h3>
+<p>它特殊在<strong>工具里又用了一次大模型</strong>——用来把大白话变成结构化参数：</p>
+
+<pre><span class="c"># 用户说："我叫张三，1998年8月8日下午2点生"</span>
+<span class="c">#        ↓  让模型抽参数（ChatPromptTemplate + JsonOutputParser）</span>
+<span class="c">#   {"name":"张三","sex":"0","year":"1998","month":"8","day":"8","hour":"14",...}</span>
+<span class="c">#        ↓  把这个字典直接当表单 POST 出去</span>
+requests.post(url, data=data, timeout=<span class="s">30</span>)</pre>
+
+<p>为什么非要转 JSON？因为那个八字接口是老式的表单接口，只认 <code>name</code>/<code>year</code>/<code>month</code> 这种固定字段。
+用户的中文句子它不认，所以中间必须有一层"翻译"。</p>
+
+<div class="box warn">
+  <div class="t">这里有个待办</div>
+  提示词里写死的 <code>api_key</code>（<code>K0I5WcMce7jLMZzTw7v1ixsn0</code>）是<b>教程里的演示密钥，已经失效</b>。
+  真正用起来要去 https://doc.yuanfenju.com 注册，拿自己的 key 替换掉 Mytools.py 第 202 行。
+</div>
+
+<h3>加一个新工具的标准动作（三步）</h3>
+<div class="flow">
+  <div class="fb"><div class="n">第 1 步：在 Mytools.py 里写函数</div>
+<pre style="margin:8px 0 0">@tool
+<span class="k">def</span> <span class="v">我的工具</span>(参数: str):
+    <span class="s">"""这里写清楚：什么情况下该用它。模型只看得到这段。"""</span>
+    <span class="k">return</span> 结果   <span class="c"># 返回值会被原样喂回给模型</span></pre>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">第 2 步：在 server.py 顶部 import</div>
+<pre style="margin:8px 0 0"><span class="k">from</span> Mytools <span class="k">import</span> (..., 我的工具)   <span class="c"># 第 21-24 行</span></pre>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="fb g"><div class="n">第 3 步：加进工具清单 ★</div>
+<pre style="margin:8px 0 0">self.tools = [..., 我的工具]   <span class="c"># server.py:298</span></pre>
+    <div class="d" style="margin-top:6px"><strong>漏了这步 = 白写。</strong>模型压根不知道有这个工具存在，就像你之前"没有搜索工具"那次。</div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="fb a"><div class="n">最后：重启服务</div></div>
+</div>
+
+<!-- ===================== 第 8 章 ===================== -->
+<h2 id="ch8">8 · 接口速查表</h2>
+
+<table>
+  <tr><th style="width:60px">方法</th><th style="width:270px">地址</th><th>作用</th></tr>
+  <tr><td>GET</td><td><code>/</code></td><td>探活，返回 Hello World</td></tr>
+  <tr><td>POST</td><td><code>/chat?query=问题&amp;session_id=abc</code></td><td><strong>主力接口</strong>。聊天（自动判情绪+用工具+存记忆）</td></tr>
+  <tr><td>POST</td><td><code>/qingxu?query=你气死我了</code></td><td>只测情绪识别，返回英文标签，调试用</td></tr>
+  <tr><td>GET</td><td><code>/memory</code></td><td>列出所有会话 id</td></tr>
+  <tr><td>GET</td><td><code>/memory?session_id=abc</code></td><td>看某个会话的完整记忆</td></tr>
+  <tr><td>POST</td><td><code>/memory/clear?session_id=abc</code></td><td>清空指定会话</td></tr>
+  <tr><td>POST</td><td><code>/memory/summarize?session_id=abc</code></td><td>手动触发一次压缩（不等满 10 条）</td></tr>
+  <tr><td>GET</td><td><code>/kb/count</code></td><td><strong>排错神器</strong>：看知识库里现在有几条</td></tr>
+  <tr><td>POST</td><td><code>/add_urls?URL=网页地址</code></td><td>手动把网页存进知识库（<code>URL</code> 必须<strong>大写</strong>）</td></tr>
+  <tr><td>POST</td><td><code>/add_pdfs</code> / <code>/add_texts</code></td><td>占位，还没实现</td></tr>
+  <tr><td>WS</td><td><code>/ws</code></td><td>WebSocket 长连接，目前是复读机</td></tr>
+  <tr><td>GET</td><td><code>/docs</code></td><td>FastAPI 自带的接口文档，可以直接在页面上试</td></tr>
+  <tr><td>GET</td><td><code>/openapi.json</code></td><td><strong>查服务装的是哪版代码</strong>——看路由清单就知道进程新不新</td></tr>
+</table>
+
+<!-- ===================== 第 9 章 ===================== -->
+<h2 id="ch9">9 · 踩过的坑（按被坑次数排序）</h2>
+
+<div class="box danger">
+  <div class="t">No.1 · 改了代码不重启（坑了你两次）</div>
+  <strong>现象：</strong>繁体字去不掉、新加的工具说"没有"、资料存不进去。<br>
+  <strong>原因：</strong>uvicorn 进程还跑着旧代码。<code>MASTER</code>、工具清单、路由都是<strong>启动时读进内存</strong>的。<br>
+  <strong>验证：</strong>浏览器打开 <code>http://127.0.0.1:8000/openapi.json</code>，看路由列表有没有你新加的。<br>
+  <strong>解决：</strong>Ctrl+C 停掉，重新 <code>python server.py</code>。
+</div>
+
+<div class="box danger">
+  <div class="t">No.2 · 本地 Qdrant 的文件锁</div>
+  <strong>现象：</strong><code>AlreadyLocked</code> / <code>Storage folder is already accessed</code>。<br>
+  <strong>原因：</strong>本地文件版 Qdrant 同一时刻只允许一个连接。<br>
+  <strong>解决：</strong>① 连接用完必须 <code>client.close()</code>（代码里都已改成 <code>try/finally</code> 写法）；
+  ② <strong>uvicorn 跑着的时候别调 <code>/add_urls</code></strong>，要批量加资料先停服务。
+</div>
+
+<div class="box warn">
+  <div class="t">No.3 · 拼写错误</div>
+  <code>from_documeents</code>（多一个 e）、<code>text-embedding-3-smell</code>（应为 small）、
+  <code>from request import</code>（应为 requests）。<br>
+  Python 不会帮你猜，报 <code>AttributeError</code> / <code>ModuleNotFoundError</code> 时先怀疑拼写。
+</div>
+
+<div class="box warn">
+  <div class="t">No.4 · 嵌入模型不统一</div>
+  库是 512 维的 BGE 中文模型，换成 OpenAI 的 1536 维会报 <code>expected dim: 512, got 1536</code>；
+  就算维度凑巧一致，不同模型算出的坐标也没有可比性，检索出来牛头不对马嘴。
+</div>
+
+<div class="box warn">
+  <div class="t">No.5 · 提示词自相矛盾</div>
+  人设里同时写着"用繁体中文作答"和"只用简体中文作答"，模型按前面的执行。<br>
+  <strong>改提示词时务必全文搜一遍有无相反指令。</strong>
+</div>
+
+<div class="box warn">
+  <div class="t">No.6 · 承诺了不存在的工具</div>
+  人设写"遇到不知道的会用搜索工具"，但工具清单里没有 → 模型只能回答"我没有这个工具"。<br>
+  <strong>人设里说的能力，工具清单里必须真有。</strong>
+</div>
+
+<div class="box">
+  <div class="t">No.7 · 模型输出不守规矩</div>
+  让它返回 JSON，它偏要用 <code>```json</code> 代码块包起来，<code>JsonOutputParser</code> 就可能解析失败。<br>
+  项目里的对策：<code>parse_summary_json()</code> 手动去掉代码块、截取首尾花括号。
+</div>
+
+<!-- ===================== 第 10 章 ===================== -->
+<h2 id="ch10">10 · Python 语法速查（看到就回来查）</h2>
+
+<table>
+  <tr><th style="width:230px">写法</th><th>意思</th></tr>
+  <tr><td><code>from x import y</code></td><td>把别的文件里的东西拿过来用</td></tr>
+  <tr><td><code>def f(a, b=1):</code></td><td>定义函数，<code>b</code> 有默认值，不传就用 1</td></tr>
+  <tr><td><code>f(role_set=xxx)</code></td><td>关键字传参，指名道姓给哪个参数赋值</td></tr>
+  <tr><td><code>self.xxx</code></td><td>存在对象上的数据，同类里所有方法都能读</td></tr>
+  <tr><td><code>@tool</code></td><td>装饰器：给下面的函数套一层额外能力</td></tr>
+  <tr><td><code>"""文档字符串"""</code></td><td>写在函数第一行，是对函数的说明。<strong>本项目里它还是给模型看的说明书</strong></td></tr>
+  <tr><td><code>f"我叫{name}"</code></td><td>f-string：把变量塞进字符串里</td></tr>
+  <tr><td><code>d["key"]</code> / <code>d.get("k", 默认)</code></td><td>取字典的值。后者<strong>取不到不报错</strong>，返回默认值</td></tr>
+  <tr><td><code>or</code> 连用（如 <code>a or b or ""</code>）</td><td>取第一个非空值，项目中大量用来兜底</td></tr>
+  <tr><td><code>a[-3:]</code></td><td>列表<strong>最后 3 个</strong>元素（负数索引从末尾数）</td></tr>
+  <tr><td><code>[f(x) for x in l]</code></td><td>列表推导：把 l 里每个元素过一遍 f，收集结果</td></tr>
+  <tr><td><code>try: ... except: ... finally:</code></td><td>出错走 except；<strong>finally 无论如何都执行</strong>（本项目用它 close 连接）</td></tr>
+  <tr><td><code>x if 条件 else y</code></td><td>三元表达式，条件成立取 x</td></tr>
+  <tr><td><code>|</code> 在 LangChain 里</td><td>管道：左边输出接右边输入（其他地方是"按位或"）</td></tr>
+  <tr><td><code>{{ }}</code> 在提示词里</td><td>转义，表示字面意义上的大括号</td></tr>
+</table>
+
+<h3>读代码的建议顺序</h3>
+<div class="flow">
+  <div class="fb"><div class="n">1 · config.py（10 秒看完）</div><div class="d">先建立"配置集中管理"的印象</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">2 · server.py 第 513-529 行</div><div class="d">看服务怎么启动的，端口在哪</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">3 · server.py 第 415-433 行</div><div class="d">看一个 HTTP 请求长什么样</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb p"><div class="n">4 · server.py 第 342-365 行（Master.run）★</div><div class="d">全项目的枢纽，把这几十行读懂，主干就通了</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb"><div class="n">5 · Mytools.py 里最简单的工具</div><div class="d">从 <code>get_info_from_local_db</code> 入手，再看复杂的</div></div>
+  <div class="arrow">↓</div>
+  <div class="fb g"><div class="n">6 · 最后才看记忆那一段</div><div class="d">它是后加的功能，不影响主干理解</div></div>
+</div>
+
+<!-- ===================== 第 11 章 ===================== -->
+<h2 id="ch11">11 · 动手练习（按难度递增）</h2>
+
+<div class="card">
+  <h4>练习 1 · 验证重启的重要性</h4>
+  <p>把 <code>SYSTEM_PROMPT</code> 里"你叫陈玉楼"改成"你叫李四"，<strong>不重启</strong>问它"你叫什么"，再重启问一次。体会差异。</p>
+</div>
+
+<div class="card">
+  <h4>练习 2 · 观察工具调用</h4>
+  <p>终端保持打开（<code>verbose=True</code> 会打印细节），发一句"我叫张三，1998年8月8日下午2点生，帮我算算八字"，
+  找到 <code>Invoking: bazi_cesuan with {...}</code> 那行——看看模型自己填了什么参数进去。</p>
+</div>
+
+<div class="card">
+  <h4>练习 3 · 看记忆长什么样</h4>
+  <p>聊两句后访问 <code>/memory</code>，再打开项目里的 <code>memory.json</code> 对照。
+  然后连发 12 句话，看 history 超过 10 条时会不会自动触发一次压缩（终端会打印 <code>[记忆] 已压缩</code>）。</p>
+</div>
+
+<div class="card">
+  <h4>练习 4 · 亲手加一个工具</h4>
+  <p>写一个返回当前时间的工具：<code>get_now()</code>。按第 7 章那三步做完，重启，问"现在几点了"，
+  看它会不会乖乖去调工具。<strong>这是检验你有没有真正理解工具机制的最好测试。</strong></p>
+</div>
+
+<div class="card">
+  <h4>练习 5 · 观察学习闭环</h4>
+  <p>填好 <code>BOCHA_API_KEY</code> 后：先 <code>/kb/count</code> 记下条数 → 问一个它肯定不知道的问题 →
+  看终端有没有 <code>Invoking: search_and_learn</code> → 再看 <code>/kb/count</code> 涨了几条。</p>
+</div>
+
+<div class="box ok" style="margin-top:30px">
+  <div class="t">最后一句</div>
+  这个项目看着代码多，其实结构就一句话：<strong>Web 层接参数 → Master 编排 → 模型决策 → 工具执行 → 记忆落盘</strong>。
+  任何时候觉得晕了，回到第 2 章那张流程图，顺着箭头走一遍就清楚了。
+</div>
+
+</main>
+</div>
+</body>
+</html>

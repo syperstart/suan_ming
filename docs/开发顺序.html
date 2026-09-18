@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开发顺序 · 洋葱式阅读手册</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --line:#e3e6ea; --text:#1f2328; --muted:#6b7280;
+    --blue:#2563eb; --blue-bg:#eff4ff;
+    --green:#15803d; --green-bg:#f0fdf4;
+    --amber:#b45309; --amber-bg:#fffbeb;
+    --red:#b91c1c; --red-bg:#fef2f2;
+    --purple:#6d28d9; --purple-bg:#f5f3ff;
+    --teal:#0f766e; --teal-bg:#f0fdfa;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.75;}
+  .wrap{display:flex;max-width:1400px;margin:0 auto;}
+  nav{width:250px;flex:0 0 250px;position:sticky;top:0;height:100vh;overflow-y:auto;
+    padding:24px 16px;border-right:1px solid var(--line);background:#fbfcfd;}
+  nav h2{font-size:13px;color:var(--muted);margin:0 0 12px 8px;letter-spacing:1px;}
+  nav a{display:block;padding:6px 12px;margin:2px 0;border-radius:6px;
+    color:var(--text);text-decoration:none;font-size:13.5px;}
+  nav a:hover{background:var(--blue-bg);color:var(--blue);}
+  nav .grp{font-size:11.5px;color:#9aa4b0;margin:14px 0 4px 10px;letter-spacing:.5px;}
+
+  main{flex:1;padding:36px 44px 120px;min-width:0;}
+  h1{font-size:29px;margin:0 0 6px;letter-spacing:-.5px;}
+  .lead{color:var(--muted);margin-bottom:26px;}
+  h2{font-size:22px;margin:48px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line);scroll-margin-top:20px;}
+  h3{font-size:17px;margin:26px 0 8px;}
+  p{margin:8px 0;}
+  code{background:#eef1f4;padding:2px 6px;border-radius:4px;
+    font-family:"Cascadia Code",Consolas,Monaco,monospace;font-size:13px;}
+  pre{background:#1e2430;color:#e6edf3;padding:14px 16px;border-radius:8px;overflow-x:auto;
+    font-family:"Cascadia Code",Consolas,Monaco,monospace;font-size:13px;line-height:1.65;margin:10px 0;}
+  pre .c{color:#7d8b9b;} pre .k{color:#ff9d76;} pre .s{color:#a5d6a7;} pre .v{color:#8ec7ff;}
+
+  .box{border-left:4px solid var(--blue);background:var(--blue-bg);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;}
+  .box.warn{border-color:var(--amber);background:var(--amber-bg);}
+  .box.danger{border-color:var(--red);background:var(--red-bg);}
+  .box.ok{border-color:var(--green);background:var(--green-bg);}
+  .box .t{font-weight:700;margin-bottom:4px;font-size:14px;color:var(--blue);}
+  .box.warn .t{color:var(--amber);} .box.danger .t{color:var(--red);} .box.ok .t{color:var(--green);}
+
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px;background:var(--card);}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f0f2f5;font-weight:600;}
+  tr:nth-child(even) td{background:#fafbfc;}
+
+  /* 洋葱：每一层 */
+  .layer{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden;}
+  .layer>.head{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;}
+  .layer>.body{padding:16px 20px 18px;}
+  .badge{
+    flex:0 0 auto;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:15px;color:#fff;background:var(--blue);
+  }
+  .badge.g{background:var(--green);} .badge.p{background:var(--purple);}
+  .badge.a{background:var(--amber);} .badge.t{background:var(--teal);} .badge.r{background:var(--red);}
+  .layer h3{margin:0;font-size:16.5px;}
+  .layer .sub{font-size:13px;color:var(--muted);margin-top:1px;}
+
+  .row{display:grid;grid-template-columns:120px 1fr;gap:10px;margin:10px 0;font-size:14px;}
+  .row>.lbl{font-weight:600;color:#4b5563;font-size:13.5px;padding-top:1px;}
+  .row>.val{min-width:0;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 0;}
+  .chip{font-size:12px;padding:2px 9px;border-radius:12px;background:#eef1f4;color:#4b5563;}
+  .chip.b{background:var(--blue-bg);color:var(--blue);}
+  .chip.g{background:var(--green-bg);color:var(--green);}
+  .chip.p{background:var(--purple-bg);color:var(--purple);}
+  .chip.a{background:var(--amber-bg);color:var(--amber);}
+  .chip.t{background:var(--teal-bg);color:var(--teal);}
+
+  .src{font-family:Consolas,monospace;font-size:12.5px;color:#8b96a3;}
+
+  /* 洋葱图示 */
+  .onion{display:flex;flex-direction:column;gap:3px;align-items:center;margin:18px 0 6px;}
+  .onion div{
+    padding:5px 0;text-align:center;font-size:13px;border-radius:6px;color:#fff;font-weight:600;
+  }
+  @media(max-width:900px){nav{display:none;}main{padding:20px;}.row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#intro">怎么用这份手册</a>
+  <a href="#model">洋葱模型：读懂结构</a>
+  <a href="#map">全局地图 + 路线选择</a>
+  <div class="grp">第一阶段 · 让它跑起来</div>
+  <a href="#L0">L0 · 起点：空项目</a>
+  <a href="#L1">L1 · 最小骨架：能起服务</a>
+  <a href="#L2">L2 · 接通大模型：能问答</a>
+  <div class="grp">第二阶段 · 让它像个人</div>
+  <a href="#L3">L3 · 加人设：变成算命先生</a>
+  <a href="#L4">L4 · 加情绪：会看脸色</a>
+  <a href="#L5">L5 · 重构成类：Master 登场</a>
+  <div class="grp">第三阶段 · 让它有手（工具）</div>
+  <a href="#L6">L6 · 加工具：升级成 Agent</a>
+  <a href="#L7">L7 · 拆文件：config + Mytools</a>
+  <div class="grp">第四阶段 · 让它有书（知识库）</div>
+  <a href="#L8">L8 · 知识库 RAG</a>
+  <a href="#L9">L9 · 批量灌资料的接口</a>
+  <div class="grp">第五阶段 · 让它有脑（记忆）</div>
+  <a href="#L10">L10 · 记忆 v1：存下来</a>
+  <a href="#L11">L11 · 记忆 v2：三层压缩</a>
+  <a href="#L12">L12 · 记忆 v3：会话隔离</a>
+  <div class="grp">第六阶段 · 让它自学</div>
+  <a href="#L13">L13 · 抓网页工具</a>
+  <a href="#L14">L14 · 联网搜索（最外层）</a>
+  <div class="grp">附录</div>
+  <a href="#lookup">反查：这段代码哪来的</a>
+  <a href="#order">如果你要从零重写</a>
+</nav>
+
+<main>
+<h1>开发顺序 · 洋葱式阅读手册</h1>
+<p class="lead">你手上这份代码不是一次写成的，是<strong>一层一层叠上去的</strong>。看懂的办法不是从头读到尾，而是<strong>按它当初生长的顺序剥洋葱</strong>。<br>
+配套文档：<a href="学习指南.html">《学习指南.html》</a> —— 那份讲<strong>概念和参数怎么传</strong>，这份讲<strong>时间顺序</strong>。两份互相补充。</p>
+
+<h2 id="intro">怎么用这份手册</h2>
+
+<div class="box ok">
+  <div class="t">核心心法</div>
+  任何一大坨看不懂的代码，<strong>都不是天生就长那样的</strong>。它一定是从一个能跑的小东西开始，遇到问题→加一块→再遇到问题→再加一块。<br>
+  你的任务不是"读懂这坨代码"，而是<strong>还原出当初那十几个"加一块"的动作</strong>。每个动作都很小，都很好懂。
+</div>
+
+<p>所以每一层（Layer）我都按同一个格式写：</p>
+<table>
+  <tr><th style="width:110px">栏目</th><th>回答什么问题</th></tr>
+  <tr><td><strong>当时遇到啥问题</strong></td><td>作者为什么要加这一层？没有它的时候缺什么？</td></tr>
+  <tr><td><strong>加了什么</strong></td><td>这一层新写的核心代码（简化版，去掉噪音）</td></tr>
+  <tr><td><strong>现在在哪</strong></td><td>对应现在文件里的哪几行 —— 你可以跳过去对照真实代码</td></tr>
+  <tr><td><strong>怎么验证</strong></td><td>一个能亲手操作的动作，确认你懂了</td></tr>
+</table>
+
+<h2 id="model">洋葱模型：先建立正确的心理预期</h2>
+
+<p>代码是<strong>由内向外</strong>长的：最先写的东西在最里面，最后写的东西包在最外面。你现在看到的文件，是所有层叠在一起的结果。</p>
+
+<div class="onion">
+  <div style="width:96%;background:#0f766e">L14 联网搜索 search_and_learn</div>
+  <div style="width:92%;background:#6d28d9">L13 抓网页 learn_from_url</div>
+  <div style="width:88%;background:#b45309">L12 会话隔离 session_id</div>
+  <div style="width:84%;background:#b45309">L11 记忆三层 + 自动压缩</div>
+  <div style="width:80%;background:#b45309">L10 记忆持久化 memory.json</div>
+  <div style="width:76%;background:#0f766e">L9 批量灌资料接口 /add_urls</div>
+  <div style="width:72%;background:#0f766e">L8 知识库 RAG</div>
+  <div style="width:68%;background:#b91c1c">L7 拆出 config.py / Mytools.py</div>
+  <div style="width:64%;background:#6d28d9">L6 工具 + AgentExecutor</div>
+  <div style="width:60%;background:#15803d">L5 Master 类重构</div>
+  <div style="width:56%;background:#15803d">L4 情绪识别 + 语气表</div>
+  <div style="width:52%;background:#15803d">L3 人设 SYSTEM_PROMPT</div>
+  <div style="width:48%;background:#2563eb">L2 接大模型 ChatOpenAI</div>
+  <div style="width:44%;background:#2563eb">L1 FastAPI 骨架</div>
+  <div style="width:40%;background:#64748b">L0 空项目</div>
+</div>
+
+<div class="box warn">
+  <div class="t">为什么会有"里面还有半成品"？</div>
+  因为后来改主意了。比如 <code>server.py</code> 里"<strong>第 4 步：定义一个工具</strong>"那个标题下面现在是空的——工具后来搬去了 <code>Mytools.py</code>，标题还在，内容搬走了。<br>
+  又比如 <code>/add_pdfs</code>、<code>/add_texts</code> 两个接口还是返回假字符串的占位。<strong>看到这些不要以为是 bug，那是"作者还没写到这儿"。</strong>
+</div>
+
+<h2 id="map">全局地图 · 三个阶段的阅读路线</h2>
+
+<p>你不必一次性全看。按目的挑一条：</p>
+
+<table>
+  <tr><th style="width:150px">你的目的</th><th style="width:230px">按这个顺序读</th><th>读完你能收获</th></tr>
+  <tr>
+    <td><strong>想先跑通整体</strong><br><span class="chip b">推荐第一条</span></td>
+    <td>L0 → L1 → L2 → L5</td>
+    <td>理解"一个 HTTP 请求怎么变成模型回答"，主干就通了</td>
+  </tr>
+  <tr>
+    <td><strong>想搞懂工具</strong></td>
+    <td>L6 → L7 → L8</td>
+    <td>理解 @tool 是怎么被调用的、文件为什么要拆开</td>
+  </tr>
+  <tr>
+    <td><strong>想搞懂记忆</strong></td>
+    <td>L10 → L11 → L12</td>
+    <td>理解为什么要有三层、为什么要压缩</td>
+  </tr>
+  <tr>
+    <td><strong>想复刻一个自己的</strong></td>
+    <td>从头到尾，配合最后一章</td>
+    <td>能从零写出同样结构的 Agent</td>
+  </tr>
+</table>
+
+<!-- ===================== 第一阶段 ===================== -->
+<h2 id="L0">第一阶段 · 让它跑起来</h2>
+
+<div class="layer" id="L0">
+  <div class="head"><div class="badge">L0</div>
+    <div><h3>起点：一个空项目</h3><div class="sub">最早的东西，其实跟这个项目一点关系都没有</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">刚用 PyCharm 新建项目，IDE 自动生成了一个示例文件。</div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+<pre>def print_hi(name):
+    print(f'Hi, {name}')</pre></div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val"><span class="src">main.py</span> —— 一共 17 行</div></div>
+    <div class="row"><div class="lbl">结论</div><div class="val">
+      <strong>这个文件可以直接无视。</strong>它跟智能体毫无关系，是 IDE 的模板。<br>
+      <span class="chip g">放心跳过</span> 你看到很多教程项目里都有这种文件，别浪费时间琢磨它。
+    </div></div>
+  </div>
+</div>
+
+<div class="layer" id="L1">
+  <div class="head"><div class="badge">L1</div>
+    <div><h3>最小骨架：能起一个服务</h3><div class="sub">目标：浏览器能访问到一个地址，拿到返回</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">还没有任何 Web 能力。第一步永远是：先让服务跑起来，哪怕只回一句 Hello World。</div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+<pre><span class="k">from</span> fastapi <span class="k">import</span> FastAPI
+<span class="k">import</span> uvicorn
+
+app = FastAPI()                      <span class="c"># ① 建一个网站应用</span>
+
+<span class="k">@app</span>.get(<span class="s">"/"</span>)                       <span class="c"># ② 挂一个路由：GET / 时执行下面的函数</span>
+<span class="k">def</span> <span class="v">read_root</span>():
+    <span class="k">return</span> {<span class="s">"Hello"</span>: <span class="s">"World"</span>}
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    uvicorn.run(app, host=<span class="s">"0.0.0.0"</span>, port=<span class="s">8000</span>)   <span class="c"># ③ 启动</span></pre>
+      <p style="margin:6px 0 0">就这三块。<code>@app.get</code> 这种写法叫<strong>装饰器/路由注册</strong>，意思是"用户访问 <code>/</code> 时，就跑下面这个函数"。</p>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <span class="src">server.py:1-8（导入）、208（app = FastAPI()）、415-417（/ 路由）、526-529（启动）</span>
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">启动服务，浏览器开 <code>http://127.0.0.1:8000/</code>，看到 <code>{"Hello":"World"}</code>。<br>
+      顺手开 <code>http://127.0.0.1:8000/docs</code> —— 这是 FastAPI 白送的接口文档页，后面你会天天用它。</div></div>
+  </div>
+</div>
+
+<div class="layer" id="L2">
+  <div class="head"><div class="badge">L2</div>
+    <div><h3>接通大模型：能一问一答</h3><div class="sub">第一次让程序"有脑子"</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">网站有了，但它是死的，只会回 Hello World。想让它能回答任意问题。</div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      两样东西：<strong>一个模型客户端</strong> + <strong>一条流水线</strong>。
+<pre><span class="c"># ① 客户端：告诉程序去哪儿找模型、用什么模型、带什么钥匙</span>
+chatmodel = ChatOpenAI(
+    model=<span class="s">"kimi-k3"</span>,
+    base_url=<span class="s">"https://api.moonshot.cn/v1"</span>,
+    api_key=<span class="s">"sk-xxxx"</span>,
+)
+
+<span class="c"># ② 流水线：填模板 → 问模型 → 把回答变成纯文本</span>
+chain = ChatPromptTemplate.from_template(<span class="s">"{input}"</span>) | chatmodel | StrOutputParser()
+answer = chain.invoke({<span class="s">"input"</span>: <span class="s">"你好"</span>})</pre>
+      <p style="margin:6px 0 0"><code>|</code> 读成"然后"。整句话就是：拿到问题塞进模板 → 然后问模型 → 然后把回答洗成字符串。</p>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <strong>模型客户端：</strong><span class="src">server.py:220-226</span>（已经搬到 <code>Master.__init__</code> 里了）<br>
+      <strong>密钥/地址：</strong><span class="src">config.py</span> 全文 —— 这是 L7 才抽出去的，<strong>这一层时它是硬编码在这里的</strong><br>
+      <strong>最简单的流水线例子：</strong><span class="src">server.py:368-388</span>（情绪链，结构完全一样，最适合当范本看）
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      打开 <code>/docs</code> 页面，找到 <code>/qingxu</code>，输入一句话试试。<strong>它是现在代码里唯一保留的"裸流水线"</strong>，
+      没包类、没工具，最能看清"模板→模型→解析"这三段是怎么回事。
+    </div></div>
+  </div>
+</div>
+
+<!-- ===================== 第二阶段 ===================== -->
+<h2 id="L3">第二阶段 · 让它像个人</h2>
+
+<div class="layer" id="L3">
+  <div class="head"><div class="badge g">L3</div>
+    <div><h3>加人设：从"AI助手"变成"算命先生"</h3><div class="sub">第一次感受到提示词的威力</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">能回答了，但它冷冰冰地自称"我是一个人工智能助手"。想让它扮演一个角色。</div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      一段纯文本。没有一行逻辑代码。
+<pre>SYSTEM_PROMPT = <span class="s">"""你是一个非常厉害的算命先生，你叫陈玉楼人称陈大师。
+1. 你精通阴阳五行...
+5. 你只使用简体中文来作答...
+6. 你从不说自己是一个人工智能助手或AI...</span></pre></div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val"><span class="src">server.py:229-249</span>（现已存成 <code>self.SYSTEM_PROMPT</code>）</div></div>
+    <div class="row"><div class="lbl">关键理解</div><div class="val">
+      <strong>人设不是代码逻辑，是一段"给模型读的说明书"。</strong>它没有 if/else，全靠模型自己理解执行。<br>
+      代价是：模型也可能不严格执行 —— 这也是为什么后来会出现"说了用简体却输出繁体"的问题。
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">把第 229 行的"陈玉楼"改成别的名字，<strong>重启服务</strong>，问它"你叫什么"。改完记得改回来。</div></div>
+  </div>
+</div>
+
+<div class="layer" id="L4">
+  <div class="head"><div class="badge g">L4</div>
+    <div><h3>加情绪：会看脸色说话</h3><div class="sub">第一次让程序"多想一步"</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">人设是固定的，但用户情绪会变。同样问"帮我算算"，高兴的人和沮丧的人应该得到不同语气的回答。</div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      两样 + 一个中间层：
+<pre><span class="c"># ① 一张"情绪 → 语气说明"的字典</span>
+MOODS = {
+    <span class="s">"depressed"</span>: {<span class="s">"roleSet"</span>: <span class="s">"- 你会以温暖、鼓励的语气来回答问题..."</span>},
+    <span class="s">"angry"</span>:     {<span class="s">"roleSet"</span>: <span class="s">"- 你会以平静、克制的语气回答问题..."</span>},
+    ...
+}
+
+<span class="c"># ② 情绪识别链：这已经是第二个独立流水线了</span>
+<span class="c">#    特点：让模型只返回一个英文单词，并且拿白名单兜底</span>
+EMOTIONS = [<span class="s">"depressed"</span>, <span class="s">"friendly"</span>, <span class="s">"default"</span>, ...]</pre>
+      <p style="margin:6px 0 0">注意白名单那步 <strong>为什么必须写</strong>：模型完全可能返回 <code>"Depressed。"</code> 这种带大小写和标点的脏数据，
+      不做清洗和校验，后面字典取值就是 <code>None</code>，直接崩。</p>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <strong>语气表：</strong><span class="src">server.py:253-295</span><br>
+      <strong>白名单：</strong><span class="src">server.py:30</span><br>
+      <strong>情绪链（含六步清洗）：</strong><span class="src">server.py:368-400</span>
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      调 <code>POST /qingxu?query=我今天太倒霉了</code>，看返回的情绪标签。多试几句不同语气的，感受白名单的作用。<br>
+      然后 <code>POST /chat</code> 用同样的话，看回答语气是不是跟着变了。
+    </div></div>
+  </div>
+</div>
+
+<div class="layer" id="L5">
+  <div class="head"><div class="badge g">L5</div>
+    <div><h3>重构成类：Master 登场</h3><div class="sub">代码开始变多，必须收拾一下了 ★读源码的关键一层</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">
+      东西越来越多：模型客户端、人设、语气表、情绪链……全是散落的全局变量。而且发现一个问题——
+      <strong>每次对话都要按不同语气重新拼一次提示词</strong>。
+    </div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      把散落的东西装进一个类，并拆出三个方法：
+<pre><span class="k">class</span> <span class="v">Master</span>:
+    <span class="k">def</span> <span class="v">__init__</span>(self):
+        self.chatmodel = ChatOpenAI(...)        <span class="c"># 存在 self 上，所有方法共享</span>
+        self.SYSTEM_PROMPT = <span class="s">"""..."""</span>
+        self.MOODS = {...}
+
+    <span class="k">def</span> <span class="v">qingxu_chain</span>(self, query):        <span class="c"># 各管一件事</span>
+    <span class="k">def</span> <span class="v">get_role_set</span>(self, emotion):    <span class="c"># 情绪 → 语气文字</span>
+    <span class="k">def</span> <span class="v">create_executor</span>(self, role_set):<span class="c"># 语气文字 → 执行器</span>
+    <span class="k">def</span> <span class="v">run</span>(self, query):                <span class="c"># 总指挥，串起来</span></pre>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val"><span class="src">server.py:216-365</span> —— 整块 Master 类</div></div>
+    <div class="row"><div class="lbl">为什么类</div><div class="val">
+      <code>self</code> 上挂的东西（<code>self.chatmodel</code>、<code>self.tools</code>）<strong>所有方法都能直接用</strong>，
+      不用 params 一路传传传。这是解决"参数传来传去"的第一步。
+    </div></div>
+    <div class="row"><div class="lbl">遗留痕迹</div><div class="val">
+      <code>__init__</code> 最后那个 <code>self.agent_executor</code>（<span class="src">server.py:302</span>）是这一层留下的备用件，
+      后来 <code>run()</code> 改成每次现造执行器，它就没用上了。<strong>看到它别困惑，是历史遗留。</strong>
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      精读 <code>run()</code>（<span class="src">server.py:342-365</span>）。这 20 行是整个项目的枢纽，
+      它里面的调用顺序 = 上面这张图上自上而下的顺序。
+    </div></div>
+  </div>
+</div>
+
+<!-- ===================== 第三阶段 ===================== -->
+<h2 id="L6">第三阶段 · 让它有手（工具）</h2>
+
+<div class="layer" id="L6">
+  <div class="head"><div class="badge p">L6</div>
+    <div><h3>加工具：从"问答"升级成"智能体"</h3><div class="sub">项目性质在这一层发生了质变</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">
+      模型只会说话，不会做事。你想让它算八字——它算不了，因为需要调外部接口。<br>
+      <strong>核心矛盾：模型能"想要"，但不能"动手"。</strong>
+    </div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      三样东西，缺一不可：
+<pre><span class="c"># ① 一个工具（当时可能就写在 server.py 里）</span>
+<span class="k">@tool</span>
+<span class="k">def</span> <span class="v">test</span>():
+    <span class="s">"""Test tool"""</span>          <span class="c"># ← 这行是给模型看的说明书</span>
+    <span class="k">return</span> <span class="s">"test"</span>
+
+<span class="c"># ② 把模型升级成"会用工具的 Agent"</span>
+agent = create_openai_tools_agent(chatmodel, tools=self.tools, prompt=prompt)
+
+<span class="c"># ③ 一个管家，负责执行模型点名的工具</span>
+executor = AgentExecutor(agent=agent, tools=self.tools, verbose=<span class="k">True</span>)</pre>
+      <p style="margin:6px 0 0">提示词里还必须留一个位置给"草稿纸"：</p>
+<pre>MessagesPlaceholder(<span class="s">"agent_scratchpad"</span>)   <span class="c"># 记录"我调过什么工具、返回了什么"</span></pre>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <strong>工具：</strong><span class="src">Mytools.py</span>（L7 才搬过去的）<br>
+      <strong>造 Agent：</strong><span class="src">server.py:326-337</span><br>
+      <strong>草稿纸：</strong><span class="src">server.py:321</span><br>
+      <strong>空壳标题：</strong><span class="src">server.py:211-213</span> —— "第 4 步：定义一个工具"下面现在是空的，就是这一层留下的
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      终端保持打开，<code>/chat</code> 里问"帮我算算八字，我叫张三，1998年8月8日下午2点生"。<br>
+      找那行 <code>Invoking: bazi_cesuan with {...}</code> —— <strong>看到它就说明这一层的机制你懂了</strong>。
+    </div></div>
+  </div>
+</div>
+
+<div class="layer" id="L7">
+  <div class="head"><div class="badge r">L7</div>
+    <div><h3>拆文件：config.py 和 Mytools.py 独立</h3><div class="sub">不是功能迭代，是"还债"</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">
+      两个实际问题逼出来的：<br>
+      <strong>①</strong> 密钥在两个地方各写一份，改一次容易漏一处。<br>
+      <strong>②</strong> server.py 越来越长，工具想单独抽文件，但一抽就<strong>循环导入</strong>崩溃。
+    </div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      不是加功能，是<strong>搬家</strong> + 定下一条铁律：
+<pre>config.py    ← 密钥、模型名、地址。谁都能用，它谁也不用
+    ↑
+Mytools.py   ← 工具 + 模型客户端 + 嵌入模型。可以用 config，★绝不能用 server
+    ↑
+server.py    ← 主控。可以用 config 和 Mytools</pre>
+      <div class="box danger" style="margin-top:10px"><div class="t">这条铁律是怎么来的</div>
+      如果 Mytools.py 顶部写 <code>from server import ...</code>，而 server.py 又写 <code>from Mytools import ...</code>，
+      Python 会陷入死循环直接 <code>ImportError</code>。<br>
+      <b>所以工具需要模型？就在 Mytools 里自己建一个（TOOL_MODEL）。需要配置？从 config 拿。</b></div>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <span class="src">config.py</span> 全文 · <span class="src">Mytools.py:1-54</span>（头部注释里就把这条规矩写清楚了）·
+      <span class="src">server.py:18-24</span>（导入）
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      盯住 <code>Mytools.py</code> 第 49-54 行的 <code>TOOL_MODEL</code> —— 它就是这条铁律的产物：
+      工具要用模型，但不能问 server 要，只能自己建一个。
+    </div></div>
+  </div>
+</div>
+
+<!-- ===================== 第四阶段 ===================== -->
+<h2 id="L8">第四阶段 · 让它有书（知识库）</h2>
+
+<div class="layer" id="L8">
+  <div class="head"><div class="badge t">L8</div>
+    <div><h3>知识库 RAG：给它一本自己的书</h3><div class="sub">这里有个好习惯值得学：先写脚本验证，再接进项目</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">模型不知道你的命理资料。想让它"开卷考试"。</div></div>
+    <div class="row"><div class="lbl">值得学的做法</div><div class="val">
+      作者<strong>没有直接在服务器里写</strong>，而是先写了一个独立脚本 <code>test_kb.py</code> 打通技术：
+<pre>test_kb.py 的流程：
+  加载嵌入模型 → 准备 3 条文本 → 建集合 → 存进去 → 用不同问题检索看效果
+</pre>
+      <p style="margin:4px 0 0">这就是现在库里那 <strong>3 条数据</strong>的来历。技术验证通过了，才把它包装成工具 <code>get_info_from_local_db</code>。</p>
+      <div class="box ok" style="margin-top:10px"><div class="t">这个方法建议你学走</div>
+      遇到陌生技术（向量库、新 API），<b>先写一个 20 行的独立脚本把它跑通</b>，再往主项目里接。
+      主项目里有 Web 层、有 Agent、有一堆干扰，在那里调试等于给自己上难度。</div>
+    </div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+<pre><span class="c"># 共享资源：写在文件顶层，★不写在函数里（否则每次调用都重新加载，要等好几秒）</span>
+EMBEDDINGS = HuggingFaceEmbeddings(model_name=<span class="s">"BAAI/bge-small-zh-v1.5"</span>)
+DB_PATH = str(Path(__file__).parent / <span class="s">"local_qdrant"</span>)
+KB_COLLECTION = <span class="s">"local_documents"</span>
+
+<span class="k">@tool</span>
+<span class="k">def</span> <span class="v">get_info_from_local_db</span>(query: str):
+    <span class="s">"""当用户问的是本地知识库资料里的内容时，用这个工具检索。"""</span>
+    client = QdrantClient(path=DB_PATH)
+    <span class="k">try</span>:
+        store = QdrantVectorStore(client=client, collection_name=KB_COLLECTION, embedding=EMBEDDINGS)
+        retriever = store.as_retriever(search_type=<span class="s">"mmr"</span>)
+        <span class="k">return</span> retriever.invoke(query)
+    <span class="k">finally</span>:
+        client.close()          <span class="c"># ★ 这个 finally 是后来补的，见第 9 章的坑</span></pre>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <span class="src">test_kb.py</span>（验证脚本，仍保留）· <span class="src">Mytools.py:30-46（常量与模型）、65-83（检索工具）</span>
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      在 <code>/chat</code> 里问"龙年运势怎么样"。命中率取决于库里有没有相关资料——你可以先
+      <code>GET /kb/count</code> 确认库里有几条。
+    </div></div>
+  </div>
+</div>
+
+<div class="layer" id="L9">
+  <div class="head"><div class="badge t">L9</div>
+    <div><h3>批量灌资料的接口</h3><div class="sub">补齐"存"的那条路</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">L8 解决了"查"，但资料只能靠脚本塞。需要一个 HTTP 接口随时可以加资料。</div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+<pre><span class="k">@app</span>.post(<span class="s">"/add_urls"</span>)
+<span class="k">def</span> <span class="v">add_urls</span>(URL: str):                  <span class="c"># ★ 参数名必须大写 URL，这是 API 约定</span>
+    docs = WebBaseLoader(URL).load()          <span class="c"># 抓网页</span>
+    chunks = RecursiveCharacterTextSplitter(  <span class="c"># 切片</span>
+        chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP,
+    ).split_documents(docs)
+    QdrantVectorStore.from_documents(chunks, EMBEDDINGS, path=..., collection_name=KB_COLLECTION)
+    <span class="k">return</span> {<span class="s">"ok"</span>: <span class="s">"添加成功"</span>}</pre>
+      <p style="margin:6px 0 0">后来为了排查"到底进没进库"，又补了 <code>GET /kb/count</code>。</p>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <span class="src">server.py:470-487（/add_urls）、490-499（/kb/count）</span><br>
+      <span class="src">server.py:502-509</span> 的 <code>/add_pdfs</code>、<code>/add_texts</code> <strong>至今还是占位</strong>，没实现
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      <code>GET /kb/count</code> 记下条数 → <code>POST /add_urls?URL=某个网址</code> → 再看条数涨没涨。<br>
+      <span class="chip a">注意</span> 本地库有文件锁，<strong>必须先把 uvicorn 停掉</strong>再调这个接口。
+    </div></div>
+  </div>
+</div>
+
+<!-- ===================== 第五阶段 ===================== -->
+<h2 id="L10">第五阶段 · 让它有脑（记忆）</h2>
+
+<div class="box">
+  <div class="t">这一阶段是三层叠加，也是最容易看晕的地方</div>
+  v1 只是"存下来" → 发现 token 会爆 → v2 加三层压缩 → 发现多人串台 → v3 加会话隔离。<br>
+  <strong>每一层都是被上一个版本的问题逼出来的。</strong>按这个顺序读，就不会觉得设计复杂。
+</div>
+
+<div class="layer" id="L10">
+  <div class="head"><div class="badge a">L10</div>
+    <div><h3>记忆 v1：先把对话存下来</h3><div class="sub">最简单的版本，一个列表就够了</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">HTTP 是无状态的，每次请求服务器都不认识你。你说"我叫张三"，下一句它就忘了。</div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      五个朴素函数，没有一个用了高级语法：
+<pre><span class="k">def</span> <span class="v">load_memory</span>():     <span class="c"># 读文件</span>
+<span class="k">def</span> <span class="v">save_memory</span>(lst):  <span class="c"># 写文件 ← 这就是"持久化"三个字的全部含义</span>
+<span class="k">def</span> <span class="v">add_memory</span>(q, a):  <span class="c"># 追加一条</span>
+<span class="k">def</span> <span class="v">get_memory_text</span>(n):<span class="c"># 取最近 n 条拼成文字</span>
+<span class="k">def</span> <span class="v">clear_memory</span>():   <span class="c"># 清空</span></pre>
+      <p style="margin:6px 0 0">当时 <code>memory.json</code> 存的是一个简单列表：<code>[{question, answer, time}, ...]</code></p>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <span class="src">server.py:88-127、202-204</span><br>
+      <strong>v1 的影子还在</strong>：<span class="src">server.py:99-101</span> 那段"兼容旧格式（以前存的是列表）"的代码，就是为了让 v1 留下的老文件还能读。
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      打开项目根目录的 <code>memory.json</code> 亲眼看一眼。它长得明明白白，比读代码直观。
+    </div></div>
+  </div>
+</div>
+
+<div class="layer" id="L11">
+  <div class="head"><div class="badge a">L11</div>
+    <div><h3>记忆 v2：三层结构 + 自动压缩</h3><div class="sub">解决 token 爆炸，也解决"重要信息被挤掉"</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">
+      两个问题一起爆出来：<br>
+      <strong>① token 爆炸</strong>：聊 50 轮，每轮都把 50 轮原文塞进提示词，又贵又慢还会超长。<br>
+      <strong>② 事实丢失</strong>：简单截断会丢掉最老的对话，而"我叫张三、1998年生"这种话往往就在最开头——丢了后面八字都算不了。
+    </div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      <strong>把一份记忆拆成三份，各管一段：</strong>
+<pre>{
+  <span class="s">"profile"</span>: {<span class="s">"姓名"</span>:<span class="s">"张三"</span>, <span class="s">"出生年月日"</span>:<span class="s">"1998-08-08"</span>},   <span class="c"># 永不压缩</span>
+  <span class="s">"summary"</span>: <span class="s">"用户叫张三，生于1998年8月8日，问过龙年运势..."</span>,     <span class="c"># 更早的对话，压成一段话</span>
+  <span class="s">"history"</span>: [最近 3 轮原文]                                  <span class="c"># 保证连贯</span>
+}</pre>
+      <p style="margin:6px 0 0">再加一个<strong>独立的压缩提示词</strong>（注意：跟算命人设无关，它只负责"把对话压短"）：</p>
+<pre>SUMMARY_PROMPT = <span class="s">"""...用第三人称客观记录...只返回 {{"summary":..., "profile":...}}..."""</span>
+<span class="c">#                                                              ↑ 双花括号是转义，不然会被当成占位符</span></pre>
+    </div></div>
+    <div class="row"><div class="lbl">触发时机</div><div class="val">
+      不是每轮都压，而是 <strong>history 超过 10 条才压一次</strong>，压完只剩最近 3 条原文。
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <strong>提示词：</strong><span class="src">server.py:69-85</span><br>
+      <strong>压缩函数：</strong><span class="src">server.py:139-175</span><br>
+      <strong>兜底解析：</strong><span class="src">server.py:130-136</span>（模型爱用 <code>```json</code> 包输出，这里手动剪掉）<br>
+      <strong>开关：</strong><span class="src">server.py:47-48</span> 的 <code>MEMORY_MAX=10</code> / <code>MEMORY_KEEP=3</code>
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      连发 12 句话，然后看终端有没有打印 <code>[记忆] 已压缩，原文剩 3 条</code>，再看 <code>memory.json</code> 里 summary 和 profile 有没有内容。<br>
+      或者直接用 <code>POST /memory/summarize</code> 手动触发一次，不用苦等。
+    </div></div>
+  </div>
+</div>
+
+<div class="layer" id="L12">
+  <div class="head"><div class="badge a">L12</div>
+    <div><h3>记忆 v3：会话隔离 session_id</h3><div class="sub">最后加的一层，纯补丁性质</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">所有对话共用一个 <code>memory.json</code>。两个人聊天（或两个测试窗口）会互相串记忆。</div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      一个"算文件名的函数" + 给所有记忆函数加一个参数：
+<pre><span class="k">def</span> <span class="v">memory_file</span>(session_id=<span class="s">"default"</span>):
+    sid = <span class="s">""</span>.join(c <span class="k">for</span> c <span class="k">in</span> str(session_id) <span class="k">if</span> c.isalnum() <span class="k">or</span> c <span class="k">in</span> <span class="s">"-_"</span>) <span class="k">or</span> <span class="s">"default"</span>
+    <span class="k">if</span> sid == <span class="s">"default"</span>:
+        <span class="k">return</span> MEMORY_DIR / <span class="s">"memory.json"</span>      <span class="c"># 默认会话沿用老文件</span>
+    <span class="k">return</span> MEMORY_DIR / (<span class="s">"memory_"</span> + sid + <span class="s">".json"</span>)</pre>
+      <p style="margin:6px 0 0">那行看着唬人的 <code>join</code> 就一句意思：<strong>把 id 里的怪字符删掉</strong>，防止有人传 <code>../../</code> 拼出别的路径。</p>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <span class="src">server.py:51-64（映射函数）、88-127/139-204（各函数加了参数）、422/447/455/462（接口接参数）</span>
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      <code>POST /chat?query=我叫小明&amp;session_id=aaa</code> 和 <code>...session_id=bbb</code> 各聊几句，
+      然后 <code>GET /memory</code> 看是不是列出了两个会话，再分别 <code>GET /memory?session_id=aaa</code> 确认互不干扰。
+    </div></div>
+  </div>
+</div>
+
+<!-- ===================== 第六阶段 ===================== -->
+<h2 id="L13">第六阶段 · 让它自学</h2>
+
+<div class="layer" id="L13">
+  <div class="head"><div class="badge p">L13</div>
+    <div><h3>抓网页工具：把 URL 变成知识</h3><div class="sub">第一次让 Agent 自己扩充自己的知识</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">
+      加资料只能靠手动调 <code>/add_urls</code>。你试过把链接直接扔进聊天框——
+      结果它回答"老夫无法打开网页链接"，<strong>因为工具清单里根本没有能抓网页的工具</strong>。
+    </div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+      <strong>两个东西 + 一处配套改动</strong>（这三步缺一不可，漏一个就白搭）：
+<pre><span class="c"># ① Mytools.py 里写函数</span>
+<span class="k">@tool</span>
+<span class="k">def</span> <span class="v">learn_from_url</span>(url: str):
+    <span class="s">"""当用户发来一个网址，想让你看看、记住、学习这个网页的内容时...</span>
+<span class="s">    ↓ ↑ 这段说明决定了模型什么时候会用它</span>
+    count, text = learn_one_url(url)
+    <span class="k">return</span> <span class="s">"已存入知识库，共 N 段。网页正文如下：..."</span>
+
+<span class="c"># ② server.py 顶部 import</span>
+<span class="k">from</span> Mytools <span class="k">import</span> (..., learn_from_url, ...)
+
+<span class="c"># ③ ★ 加进工具清单 —— 漏了这步等于白写</span>
+self.tools = [..., learn_from_url]</pre>
+      <p style="margin:6px 0 0">还顺带改了人设第 3 条（原来写着"会用搜索工具搜索"，但当时根本没有这个工具，
+      模型念着这句却找不到工具，只好回答"我没有"）。</p>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <span class="src">Mytools.py:86-129</span>（<code>learn_one_url</code> 公共函数 + <code>learn_from_url</code> 工具）·
+      <span class="src">server.py:21-24（导入）、298（工具清单）、247（人设第 3 条）</span>
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      <code>/chat</code> 里直接发一个网址，看终端有没有 <code>Invoking: learn_from_url</code>，
+      再 <code>GET /kb/count</code> 看条数涨没涨。
+    </div></div>
+  </div>
+</div>
+
+<div class="layer" id="L14">
+  <div class="head"><div class="badge" style="background:#0f766e">L14</div>
+    <div><h3>联网搜索：最外面的一层</h3><div class="sub">最新加的，闭环也在这里合上</div></div></div>
+  <div class="body">
+    <div class="row"><div class="lbl">当时遇到啥</div><div class="val">
+      <code>learn_from_url</code> 只能处理<strong>你给的</strong>链接。碰到"2026 年属龙运势怎么样"这类没有链接的开放问题，它还是只会瞎编。
+    </div></div>
+    <div class="row"><div class="lbl">加了什么</div><div class="val">
+<pre><span class="k">@tool</span>
+<span class="k">def</span> <span class="v">search_and_learn</span>(query: str):
+    <span class="s">"""当遇到你不知道的事、需要上网查资料的时候，用这个工具联网搜索。"""</span>
+    resp = requests.post(<span class="s">"https://api.bochaai.com/v1/web-search"</span>, 
+                         headers={<span class="s">"Authorization"</span>: <span class="s">"Bearer "</span>+BOCHA_API_KEY}, ...)
+    pages = (data.get(<span class="s">"webPages"</span>) <span class="k">or</span> {}).get(<span class="s">"value"</span>) <span class="k">or</span> []
+    <span class="k">for</span> page <span class="k">in</span> pages:
+        learn_one_url(page[<span class="s">"url"</span>])   <span class="c"># ★ 复用 L13 抽出的公共函数</span></pre>
+      <div class="box ok" style="margin-top:10px"><div class="t">闭环在这里合上</div>
+      搜索 → 自动把前 3 个网页<b>学进本地知识库</b> → 下次遇到同类问题不用联网就能答。<br>
+      这已经不是"查一次就忘"，而是<b>越用越懂</b>。</div>
+    </div></div>
+    <div class="row"><div class="lbl">现在在哪</div><div class="val">
+      <span class="src">Mytools.py:132-188</span>·<span class="src">config.py:21（BOCHA_API_KEY）</span>·<span class="src">server.py:298（工具清单）</span>
+    </div></div>
+    <div class="row"><div class="lbl">还没完成</div><div class="val">
+      <code>config.py</code> 的 <code>BOCHA_API_KEY</code> 目前是<strong>空字符串</strong>，所以这个工具会返回"还没配置"的提示。
+      去 https://open.bochaai.com 拿 key 填上才真正生效。
+    </div></div>
+    <div class="row"><div class="lbl">怎么验证</div><div class="val">
+      先 <code>GET /kb/count</code> 记下条数 → 问一个它肯定不知道的问题 →
+      看有没有 <code>Invoking: search_and_learn</code> → 再看条数涨了几条。
+    </div></div>
+  </div>
+</div>
+
+<!-- ===================== 附录 ===================== -->
+<h2 id="lookup">附录 A · 反查表：看到这段代码，它来自哪一层</h2>
+
+<p>读源码时遇到下面这些让人困惑的地方，对着这张表找答案：</p>
+
+<table>
+  <tr><th style="width:290px">你看到的东西</th><th style="width:70px">来自</th><th>说明</th></tr>
+  <tr><td><code>main.py</code></td><td>L0</td><td>PyCharm 模板，跟项目无关，可无视</td></tr>
+  <tr><td>「第 4 步：定义一个工具」下面空着</td><td>L6→L7</td><td>工具搬到 Mytools.py 了，标题没删</td></tr>
+  <tr><td><code>self.agent_executor</code></td><td>L5</td><td>早期备用件，现在 <code>run()</code> 不用它</td></tr>
+  <tr><td><code>/add_pdfs</code>、<code>/add_texts</code> 返回假数据</td><td>L9</td><td>占位接口，作者还没写到这</td></tr>
+  <tr><td>记忆函数里的「兼容旧格式」那段</td><td>L10</td><td>v1 存的是列表，v2 改成字典，这里做兼容</td></tr>
+  <tr><td><code>memory_file()</code> 里的字符过滤</td><td>L12</td><td>防路径注入的安全措施</td></tr>
+  <tr><td><code>TOOL_MODEL</code>（工具自己的模型）</td><td>L7</td><td>为了不 import server 而不得不自建</td></tr>
+  <tr><td>到处是 <code>try/finally + client.close()</code></td><td>L9 修复</td><td>被文件锁坑过之后补的</td></tr>
+  <tr><td>每个函数都有的 <code>session_id="default"</code></td><td>L12</td><td>最后统一加的，所以几乎每个记忆函数都有</td></tr>
+  <tr><td><code>parse_summary_json()</code></td><td>L11 修复</td><td>被模型用 ```json 包输出坑过之后补的</td></tr>
+  <tr><td>人设第 5 条反复强调简体</td><td>L11 修复</td><td>原来同时写着"繁体"和"简体"，冲突了</td></tr>
+</table>
+
+<h2 id="order">附录 B · 如果你要从零重写一遍</h2>
+
+<p>把上面 15 层压成一个可执行的清单。每步做完<strong>先跑通再往下走</strong>，别攒着：</p>
+
+<table>
+  <tr><th style="width:50px">步</th><th style="width:190px">做什么</th><th>做完的验收标准</th></tr>
+  <tr><td>1</td><td>FastAPI 骨架 + <code>/</code></td><td>浏览器能打开 <code>/docs</code></td></tr>
+  <tr><td>2</td><td>接大模型，裸 <code>/qingxu</code> 接口</td><td>能把一句话转成情绪标签</td></tr>
+  <tr><td>3</td><td>写 SYSTEM_PROMPT 人设</td><td>它会自称算命先生，不再说自己是 AI</td></tr>
+  <tr><td>4</td><td>写 MOODS 语气表，<code>/chat</code> 按情绪选语气</td><td>同样问题不同情绪，语气会变</td></tr>
+  <tr><td>5</td><td>重构成 Master 类</td><td>功能不变，但代码能看懂了</td></tr>
+  <tr><td>6</td><td>加第一个工具，升级成 Agent</td><td>终端能看到 <code>Invoking: xxx</code></td></tr>
+  <tr><td>7</td><td>拆出 config.py / Mytools.py</td><td>能正常启动，没有循环导入</td></tr>
+  <tr><td>8</td><td>先写 test_kb.py 验证向量库，再做成工具</td><td>能问出库里那 3 条资料的内容</td></tr>
+  <tr><td>9</td><td>加 <code>/add_urls</code> + <code>/kb/count</code></td><td>能往库里灌一个网页，条数看得到变化</td></tr>
+  <tr><td>10</td><td>记忆 v1：列表版</td><td>重启服务后它还记得你叫什么</td></tr>
+  <tr><td>11</td><td>记忆 v2：三层 + 压缩</td><td>聊满 10 条会看到压缩日志</td></tr>
+  <tr><td>12</td><td>记忆 v3：session_id</td><td>两个 id 互不串台</td></tr>
+  <tr><td>13</td><td>抓网页工具</td><td>聊天里发链接它能自己学</td></tr>
+  <tr><td>14</td><td>联网搜索</td><td>问开放问题它会自己去搜</td></tr>
+</table>
+
+<div class="box ok" style="margin-top:26px">
+  <div class="t">最后</div>
+  回头看这 15 层，<strong>没有哪一层是"难到学不会"的</strong>。难的地方只在于它们全挤在一个文件里，
+  让你误以为要一次性全懂。<br>
+  现在你已经知道它们的先后顺序了——照着 L0→L14 走一遍，每停一层问自己一句"如果没有这一层会怎样"，
+  答得出来，这层就过了。
+</div>
+
+</main>
+</div>
+</body>
+</html>
