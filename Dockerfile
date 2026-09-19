@@ -45,8 +45,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #    这是 Docker 的小技巧：改代码不会让上面的 pip 重装一遍，重建快很多
 COPY requirements.txt .
 
-# ★ torch 单独用「CPU 版源」安装 —— 默认源会拉 2GB 多的 CUDA 版本，慢且用不上
-#   （不写死版本号，避免"找不到该版本"导致构建失败）
+# ★★ torch 必须分两步装，这是国内构建的关键（踩过坑！）
+#    第 1 步：torch 的"纯 Python 依赖"（sympy / networkx / jinja2 等）走腾讯云镜像 → 快
+#    第 2 步：只把 torch 本体从 pytorch 官方源拉（CPU 版约 196MB，实测 4.5MB/s）
+#    如果合成一句装，pip 会跑去 pytorch 源拉那几个小包，
+#    实测每个只有 20KB/s，能卡十几分钟不动（这就是一开始构建卡死的原因之一）。
+RUN pip install --no-cache-dir -i https://mirrors.tencentyun.com/pypi/simple \
+        filelock typing-extensions sympy networkx jinja2 fsspec mpmath MarkupSafe
+
+# torch 用「CPU 版源」—— 默认源会拉 2GB 多的 CUDA 版本，又慢又用不上
 RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch
 
 # ★ 其余依赖走腾讯云 PyPI 镜像（国内实测 1.4 MB/s，比官方源快几十倍）
