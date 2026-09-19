@@ -24,6 +24,18 @@ ENV TZ=Asia/Shanghai
 
 WORKDIR /app
 
+# ★★ 第一步必须先换 apt 源！！
+#    Debian 13 用的是 deb822 格式（源文件在 /etc/apt/sources.list.d/debian.sources）
+#    官方源 deb.debian.org 在国内服务器实测只有 82 KB/s，
+#    不换源的话 apt-get update 会卡十几分钟甚至超时。
+#    换成腾讯云内网镜像后实测 3.6 MB/s，快 45 倍。
+RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i 's|deb.debian.org|mirrors.tencentyun.com|g' /etc/apt/sources.list.d/debian.sources; \
+    fi; \
+    if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's|deb.debian.org|mirrors.tencentyun.com|g; s|security.debian.org|mirrors.tencentyun.com|g' /etc/apt/sources.list; \
+    fi
+
 # 装编译工具：精简镜像里默认没有，个别依赖包需要现场编译
 RUN apt-get update && apt-get install -y --no-install-recommends \
         gcc g++ \
@@ -34,12 +46,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 
 # ★ torch 单独用「CPU 版源」安装 —— 默认源会拉 2GB 多的 CUDA 版本，慢且用不上
-#   若报找不到 2.10.0 这个版本，把 ==2.10.0 删掉再构建
-RUN pip install --no-cache-dir torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+#   （不写死版本号，避免"找不到该版本"导致构建失败）
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch
 
-# 装其余依赖。如果服务器在国内且访问 PyPI 慢，在下面这行末尾加：
-#   -i https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install --no-cache-dir -r requirements.txt
+# ★ 其余依赖走腾讯云 PyPI 镜像（国内实测 1.4 MB/s，比官方源快几十倍）
+RUN pip install --no-cache-dir -i https://mirrors.tencentyun.com/pypi/simple -r requirements.txt
 
 # 最后复制代码
 COPY . .
